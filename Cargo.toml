@@ -1,0 +1,20 @@
+[workspace]
+
+members = [
+    "node",
+    "node/stream",
+    "node/log_entry_sync",
+    "node/rpc",
+    "node/shared_types",
+    "node/storage",
+    "node/storage_with_stream",
+
+    "zerog-storage-rust/common/merkle_tree",
+    "zerog-storage-rust/common/merkle_light",
+    "zerog-storage-rust/common/spec",
+    "zerog-storage-rust/common/append_merkle"
+]
+resolver = "2"
+
+[patch.crates-io]
+eth2_ssz = { path = "version-meld/eth2_ssz" }

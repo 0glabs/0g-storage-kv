@@ -1,0 +1,30 @@
+[package]
+name = "storage_with_stream"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { version = "=1.0.58", features = ["backtrace"] }
+append_merkle = { path = "../../zerog-storage-rust/common/append_merkle" }
+eth2_ssz = "0.4.0"
+eth2_ssz_derive = "0.3.0"
+ethereum-types = "0.14"
+hex = "0.4.3"
+kvdb = "0.13.0"
+kvdb-memorydb = "0.13.0"
+kvdb-rocksdb = "0.19.0"
+merkle_light = { path = "../../zerog-storage-rust/common/merkle_light" }
+merkle_tree = { path = "../../zerog-storage-rust/common/merkle_tree" }
+storage = { path = "../storage" }
+rayon = "1.5.3"
+shared_types = { path = "../shared_types" }
+tracing = "0.1.35"
+typenum = "1.15.0"
+rusqlite = { version = "0.28.0", features = ["bundled"] }
+const_format = "0.2.26"
+tokio-rusqlite = "0.3.0"
+async-trait = "0.1.56"
+
+[dev-dependencies]
+tempdir = "0.3.7"
+rand = "0.8.5"
