@@ -127,6 +127,7 @@ dependencies = [
 [[package]]
 name = "append_merkle"
 version = "0.1.0"
+source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#7667e020191f0cdd53c416e656cbd88ce0379959"
 dependencies = [
  "anyhow",
  "eth2_ssz",
@@ -945,6 +946,7 @@ checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 [[package]]
 name = "contract-interface"
 version = "0.1.0"
+source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#7667e020191f0cdd53c416e656cbd88ce0379959"
 dependencies = [
  "ethers",
  "serde_json",
@@ -3781,6 +3783,7 @@ dependencies = [
 [[package]]
 name = "lighthouse_metrics"
 version = "0.2.0"
+source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#7667e020191f0cdd53c416e656cbd88ce0379959"
 dependencies = [
  "lazy_static",
  "prometheus",
@@ -3903,6 +3906,7 @@ checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
 [[package]]
 name = "merkle_light"
 version = "0.4.0"
+source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#7667e020191f0cdd53c416e656cbd88ce0379959"
 dependencies = [
  "rayon",
 ]
@@ -3910,8 +3914,8 @@ dependencies = [
 [[package]]
 name = "merkle_tree"
 version = "0.1.0"
+source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#7667e020191f0cdd53c416e656cbd88ce0379959"
 dependencies = [
- "hex",
  "merkle_light",
  "tiny-keccak",
 ]
@@ -6204,6 +6208,7 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 [[package]]
 name = "task_executor"
 version = "0.1.0"
+source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#7667e020191f0cdd53c416e656cbd88ce0379959"
 dependencies = [
  "exit-future",
  "futures",
@@ -7368,6 +7373,7 @@ dependencies = [
 [[package]]
 name = "zgs_seal"
 version = "0.1.0"
+source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#7667e020191f0cdd53c416e656cbd88ce0379959"
 dependencies = [
  "ethereum-types 0.14.1",
  "tiny-keccak",
@@ -7377,6 +7383,7 @@ dependencies = [
 [[package]]
 name = "zgs_spec"
 version = "0.1.0"
+source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#7667e020191f0cdd53c416e656cbd88ce0379959"
 
 [[package]]
 name = "zip"

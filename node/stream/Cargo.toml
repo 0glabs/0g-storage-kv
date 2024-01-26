@@ -7,19 +7,19 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "=1.0.58", features = ["backtrace"] }
-append_merkle = { path = "../../zerog-storage-rust/common/append_merkle" }
+append_merkle = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
 async-trait = "0.1.56"
 ethereum-types = "0.14"
 futures = "0.3.21"
 jsonrpsee = { version = "0.14.0", features = ["full"] }
 shared_types = { path = "../shared_types" }
-task_executor = { path = "../../zerog-storage-rust/common/task_executor" }
+task_executor = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
 tokio = "1.19.2"
 ethers = { version = "^2", features = ["ws"] }
 serde_json = "1.0.82"
 storage_with_stream = { path = "../storage_with_stream" }
 rpc = {path = "../rpc"}
-contract-interface = { path = "../../zerog-storage-rust/common/contract-interface" }
+contract-interface = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
 rusqlite = { version = "0.28.0", features = ["bundled"] }
 tracing = "0.1.35"
 eth2_ssz = "0.4.0"

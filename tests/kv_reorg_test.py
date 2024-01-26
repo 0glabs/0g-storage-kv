@@ -62,7 +62,6 @@ class ReorgTest(TestFramework):
         submissions, data_root = create_submission(
             chunk_data, tags if given_tags is None else given_tags
         )
-        self.log.info("data root: %s, submissions: %s", data_root, submissions)
         self.contract.submit(
             submissions, tx_params=tx_params, node_idx=node_index)
         wait_until(
@@ -77,10 +76,6 @@ class ReorgTest(TestFramework):
         wait_until(lambda: client.zgs_get_file_info(data_root) is not None)
 
         segments = submit_data(client, chunk_data)
-        self.log.info(
-            "segments: %s", [(s["root"], s["index"], s["proof"])
-                             for s in segments]
-        )
         wait_until(lambda: client.zgs_get_file_info(data_root)["finalized"])
 
     def update_data(self, writes):

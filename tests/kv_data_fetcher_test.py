@@ -65,7 +65,6 @@ class DataFetcherTest(TestFramework):
         submissions, data_root = create_submission(
             chunk_data, tags if given_tags is None else given_tags
         )
-        self.log.info("data root: %s, submissions: %s", data_root, submissions)
         self.contract.submit(submissions, tx_params=tx_params)
         wait_until(lambda: self.contract.num_submissions()
                    == self.next_tx_seq + 1)
@@ -74,10 +73,6 @@ class DataFetcherTest(TestFramework):
         wait_until(lambda: client.zgs_get_file_info(data_root) is not None)
 
         segments = submit_data(client, chunk_data)
-        self.log.info(
-            "segments: %s", [(s["root"], s["index"], s["proof"])
-                             for s in segments]
-        )
         wait_until(lambda: client.zgs_get_file_info(data_root)["finalized"], timeout=60)
 
     def update_data(self, writes):

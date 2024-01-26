@@ -6,17 +6,17 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-append_merkle = { path = "../../zerog-storage-rust/common/append_merkle" }
+append_merkle = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
 futures = "0.3.21"
 jsonrpsee = { version = "0.14.0", features = ["full"] }
 serde = { version = "1.0.137", features = ["derive"] }
 base64 = "0.13.0"
 shared_types = { path = "../shared_types" }
-task_executor = { path = "../../zerog-storage-rust/common/task_executor" }
+task_executor = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
 tokio = { version = "1.19.2", features = ["macros", "sync"] }
 tracing = "0.1.35"
-merkle_light = { path = "../../zerog-storage-rust/common/merkle_light" }
-merkle_tree = { path = "../../zerog-storage-rust/common/merkle_tree" }
+merkle_light = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
+merkle_tree = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
 futures-channel = "^0.3"
 ethereum-types = "0.14"
 storage_with_stream = { path = "../storage_with_stream" }

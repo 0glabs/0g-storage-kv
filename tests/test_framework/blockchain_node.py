@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import time
 
+from eth_utils import decode_hex
 from web3 import Web3, HTTPProvider
 from web3.middleware import construct_sign_and_send_raw_middleware
 from enum import Enum, unique
@@ -273,12 +274,12 @@ class BlockchainNode(TestNode):
         token_contract, _ = deploy_contract(self.token_contract_path)
         self.log.debug("ERC20 deployed")
         flow_contract, flow_contract_hash = deploy_contract(
-            self.contract_path, [token_contract.address]
+            self.contract_path, ["0x0000000000000000000000000000000000000000", 100, 0]
         )
         self.log.debug("Flow deployed")
         mine_contract, _ = deploy_contract(
             self.mine_contract_path,
-            [flow_contract.address, NO_SEAL_FLAG],
+            [flow_contract.address, "0x0000000000000000000000000000000000000000", 7],
         )
         self.log.debug("Mine deployed")
         self.log.info("All contracts deployed")
@@ -301,7 +302,7 @@ class BlockchainNode(TestNode):
         self.wait_for_transaction_receipt(w3, tx_hash)
 
         tx_hash = mine_contract.functions.setMiner(
-            MINER_ID).transact(TX_PARAMS)
+            decode_hex(MINER_ID)).transact(TX_PARAMS)
         self.wait_for_transaction_receipt(w3, tx_hash)
 
         return flow_contract, flow_contract_hash, mine_contract
