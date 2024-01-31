@@ -325,8 +325,7 @@ class TestFramework:
         ionion_node_rpc_url,
         file_to_upload,
     ):
-        assert os.path.exists(
-            self.cli_binary), "%s should be exist" % self.cli_binary
+        assert os.path.exists(self.cli_binary), ("zgs CLI binary not found: %s" % self.cli_binary)
         upload_args = [
             self.cli_binary,
             "upload",
@@ -448,18 +447,6 @@ class TestFramework:
         self.token_contract_path = self.options.token_contract
         self.mine_contract_path = self.options.mine_contract
 
-        assert os.path.exists(self.blockchain_binary), (
-            "blockchain binary not found: %s" % self.blockchain_binary
-        )
-        assert os.path.exists(self.zgs_binary), (
-            "zgs binary not found: %s" % self.zgs_binary
-        )
-        assert os.path.exists(self.cli_binary), (
-            "zgs CLI binary not found: %s" % self.cli_binary
-        )
-        assert os.path.exists(self.kv_binary), (
-            "zgs kv binary not found: %s" % self.kv_binary
-        )
         assert os.path.exists(self.contract_path), (
             "%s should be exist" % self.contract_path
         )
