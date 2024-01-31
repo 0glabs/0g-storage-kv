@@ -49,10 +49,10 @@ class TestFramework:
         tests_dir = os.path.dirname(__file_path__)
         root_dir = os.path.dirname(tests_dir)
         self.__default_conflux_binary__ = os.path.join(
-            tests_dir, "utility", "conflux" + binary_ext
+            tests_dir, "tmp", "conflux" + binary_ext
         )
         self.__default_geth_binary__ = os.path.join(
-            tests_dir, "utility", "geth" + binary_ext
+            tests_dir, "tmp", "geth" + binary_ext
         )
         self.__default_zgs_node_binary__ = os.path.join(
             root_dir, "zerog-storage-rust", "target", "release", "zgs_node" + binary_ext
