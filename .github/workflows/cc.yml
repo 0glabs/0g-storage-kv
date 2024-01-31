@@ -15,30 +15,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout sources
+      uses: actions/checkout@v3
       with:
         submodules: recursive
 
-    - name: Cargo cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-        key: ${{ runner.os }}-cargo-nightly-test-${{ hashFiles('**/Cargo.lock') }}
-
-    - name: Install nightly toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-        override: true
+    - name: Setup Rust (cache & toolchain)
+      uses: ./.github/actions/setup-rust
 
     - name: Run unittest
-      run: cargo +nightly test --all-features --no-fail-fast
+      run: cargo test --all-features --no-fail-fast
       env:
         CARGO_INCREMENTAL: '0'
+        RUSTC_BOOTSTRAP: '1'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Copt-level=0 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests'
         RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Copt-level=0 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests'
 
@@ -49,4 +38,7 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         file: ${{ steps.coverage.outputs.report }}
-        fail_ci_if_error: true
+        # Disable to avoid CI failure as following:
+        # ['error'] There was an error running the uploader: Error uploading to https://codecov.io: Error: There was an error fetching the storage 
+        # URL during POST: 404 - {'detail': ErrorDetail(string='Could not find a repository, try using repo upload token', code='not_found')}
+        # fail_ci_if_error: true
