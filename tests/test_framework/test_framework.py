@@ -45,6 +45,25 @@ class TestFramework:
         self.zgs_node_configs = {}
         self.blockchain_node_type = blockchain_node_type
 
+        binary_ext = ".exe" if is_windows_platform() else ""
+        tests_dir = os.path.dirname(__file_path__)
+        root_dir = os.path.dirname(tests_dir)
+        self.__default_conflux_binary__ = os.path.join(
+            tests_dir, "tmp", "conflux" + binary_ext
+        )
+        self.__default_geth_binary__ = os.path.join(
+            tests_dir, "tmp", "geth" + binary_ext
+        )
+        self.__default_zgs_node_binary__ = os.path.join(
+            root_dir, "zerog-storage-rust", "target", "release", "zgs_node" + binary_ext
+        )
+        self.__default_zgs_cli_binary__ = os.path.join(__file_path__,
+            root_dir, "zerog-storage-rust", "target", "zgs-client"  + binary_ext
+        )
+        self.__default_zgs_kv_binary__ = os.path.join(__file_path__,
+            root_dir, "target", "release", "zgs_kv" + binary_ext
+        )
+
     def __setup_blockchain_node(self):
         for i in range(self.num_blockchain_nodes):
             if i in self.blockchain_node_configs:
@@ -170,21 +189,14 @@ class TestFramework:
         parser.add_argument(
             "--conflux-binary",
             dest="conflux",
-            default=os.path.join(
-                __file_path__,
-                "../utility/conflux" +
-                (".exe" if is_windows_platform() else ""),
-            ),
+            default=self.__default_conflux_binary__,
             type=str,
         )
 
         parser.add_argument(
             "--bsc-binary",
             dest="bsc",
-            default=os.path.join(
-                __file_path__,
-                "../utility/geth" + (".exe" if is_windows_platform() else ""),
-            ),
+            default=self.__default_geth_binary__,
             type=str,
         )
 
@@ -193,11 +205,7 @@ class TestFramework:
             dest="zgs",
             default=os.getenv(
                 "ZGS",
-                default=os.path.join(
-                    __file_path__,
-                    "../../zerog-storage-rust/target/release/zgs_node"
-                    + (".exe" if is_windows_platform() else ""),
-                ),
+                default=self.__default_zgs_node_binary__,
             ),
             type=str,
         )
@@ -205,22 +213,14 @@ class TestFramework:
         parser.add_argument(
             "--zgs-client",
             dest="cli",
-            default=os.path.join(
-                __file_path__,
-                "../../zerog-storage-rust/target/zgs-client"
-                + (".exe" if is_windows_platform() else ""),
-            ),
+            default=self.__default_zgs_cli_binary__,
             type=str,
         )
 
         parser.add_argument(
             "--zgs-kv",
             dest="zgs_kv",
-            default=os.path.join(
-                __file_path__,
-                "../../target/release/zgs_kv"
-                + (".exe" if is_windows_platform() else ""),
-            ),
+            default=self.__default_zgs_kv_binary__,
             type=str,
         )
 
@@ -448,6 +448,18 @@ class TestFramework:
         self.token_contract_path = self.options.token_contract
         self.mine_contract_path = self.options.mine_contract
 
+        assert os.path.exists(self.blockchain_binary), (
+            "blockchain binary not found: %s" % self.blockchain_binary
+        )
+        assert os.path.exists(self.zgs_binary), (
+            "zgs binary not found: %s" % self.zgs_binary
+        )
+        assert os.path.exists(self.cli_binary), (
+            "zgs CLI binary not found: %s" % self.cli_binary
+        )
+        assert os.path.exists(self.kv_binary), (
+            "zgs kv binary not found: %s" % self.kv_binary
+        )
         assert os.path.exists(self.contract_path), (
             "%s should be exist" % self.contract_path
         )
