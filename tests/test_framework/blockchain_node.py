@@ -161,8 +161,7 @@ class TestNode:
                 self.log.info("Process is still running")
             else:
                 self.log.info(
-                    "Process has terminated with code {}".format(
-                        self.return_code)
+                    "Process has terminated with code {}".format(self.return_code)
                 )
 
             raise AssertionError(
@@ -237,8 +236,7 @@ class BlockchainNode(TestNode):
         self._wait_for_rpc_connection(lambda rpc: rpc.eth_syncing() is False)
 
     def wait_for_start_mining(self):
-        self._wait_for_rpc_connection(
-            lambda rpc: int(rpc.eth_blockNumber(), 16) > 0)
+        self._wait_for_rpc_connection(lambda rpc: int(rpc.eth_blockNumber(), 16) > 0)
 
     def wait_for_transaction_receipt(self, w3, tx_hash, timeout=120, parent_hash=None):
         return w3.eth.wait_for_transaction_receipt(tx_hash, timeout)
@@ -301,8 +299,9 @@ class BlockchainNode(TestNode):
         ).transact(TX_PARAMS1)
         self.wait_for_transaction_receipt(w3, tx_hash)
 
-        tx_hash = mine_contract.functions.setMiner(
-            decode_hex(MINER_ID)).transact(TX_PARAMS)
+        tx_hash = mine_contract.functions.setMiner(decode_hex(MINER_ID)).transact(
+            TX_PARAMS
+        )
         self.wait_for_transaction_receipt(w3, tx_hash)
 
         return flow_contract, flow_contract_hash, mine_contract

@@ -23,6 +23,7 @@ impl StreamManager {
         config: &StreamConfig,
         store: Arc<RwLock<dyn Store>>,
         clients: Vec<HttpClient>,
+        admin_client: Option<HttpClient>,
         task_executor: TaskExecutor,
     ) -> Result<(StreamDataFetcher, StreamReplayer)> {
         // initialize
@@ -53,8 +54,14 @@ impl StreamManager {
         }
 
         // spawn data sync and stream replay threads
-        let fetcher =
-            StreamDataFetcher::new(config.clone(), store.clone(), clients, task_executor).await?;
+        let fetcher = StreamDataFetcher::new(
+            config.clone(),
+            store.clone(),
+            clients,
+            admin_client,
+            task_executor,
+        )
+        .await?;
         let replayer = StreamReplayer::new(config.clone(), store.clone()).await?;
         Ok((fetcher, replayer))
     }

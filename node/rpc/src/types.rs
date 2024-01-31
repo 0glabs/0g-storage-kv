@@ -205,6 +205,27 @@ pub struct KeyValueSegment {
     pub size: u64,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileSyncGoal {
+    /// File chunks in total.
+    pub num_chunks: u64,
+    /// Chunk index to sync from (starts from 0, inclusive).
+    pub index_start: u64,
+    /// Chunk index to sync to (exclusive).
+    pub index_end: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileSyncInfo {
+    pub elapsed_secs: u64,
+    pub peers: usize,
+    pub goal: FileSyncGoal,
+    pub next_chunks: u64,
+    pub state: String,
+}
+
 mod base64 {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 

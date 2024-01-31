@@ -1,6 +1,7 @@
 use crate::StreamConfig;
 use anyhow::{anyhow, bail, Result};
 use jsonrpsee::http_client::HttpClient;
+use rpc::ZgsAdminClient;
 use rpc::ZgsRpcClient;
 use shared_types::{ChunkArray, Transaction};
 use std::{
@@ -9,6 +10,8 @@ use std::{
     sync::Arc,
     time::Duration,
 };
+
+
 use storage_with_stream::{log_store::log_manager::ENTRY_SIZE, Store};
 use task_executor::TaskExecutor;
 use tokio::sync::{
@@ -19,18 +22,19 @@ use tokio::sync::{
 const RETRY_WAIT_MS: u64 = 1000;
 const ENTRIES_PER_SEGMENT: usize = 1024;
 const MAX_DOWNLOAD_TASK: usize = 5;
-const ALERT_CNT: i32 = 10;
 const MAX_RETRY: usize = 5;
 
 pub struct StreamDataFetcher {
     config: StreamConfig,
     store: Arc<RwLock<dyn Store>>,
     clients: Vec<HttpClient>,
+    admin_client: Option<HttpClient>,
     task_executor: TaskExecutor,
 }
 
 async fn download_with_proof(
-    client: HttpClient,
+    clients: Vec<HttpClient>,
+    client_index: usize,
     tx: Arc<Transaction>,
     start_index: usize,
     end_index: usize,
@@ -38,9 +42,10 @@ async fn download_with_proof(
     sender: UnboundedSender<Result<(), (usize, usize, bool)>>,
 ) {
     let mut fail_cnt = 0;
-    while fail_cnt < ALERT_CNT {
-        debug!("download_with_proof for {}", start_index);
-        match client
+    while fail_cnt < clients.len() {
+        let index = (client_index + fail_cnt) % clients.len();
+        debug!("download_with_proof for tx_seq: {}, start_index: {}, end_index {} from client #{}", tx.seq, start_index, end_index, index);
+        match clients[index]
             .download_segment_with_proof(tx.data_merkle_root, start_index / ENTRIES_PER_SEGMENT)
             .await
         {
@@ -99,16 +104,16 @@ async fn download_with_proof(
             }
             Ok(None) => {
                 debug!(
-                    "start_index {:?}, end_index {:?}, response is none",
-                    start_index, end_index
+                    "tx_seq {}, start_index {}, end_index {}, client #{} response is none",
+                    tx.seq, start_index, end_index, index
                 );
                 fail_cnt += 1;
                 tokio::time::sleep(Duration::from_millis(RETRY_WAIT_MS)).await;
             }
             Err(e) => {
                 warn!(
-                    "start_index {:?}, end_index {:?}, response error: {:?}",
-                    start_index, end_index, e
+                    "tx_seq {}, start_index {}, end_index {}, client #{} response error: {:?}",
+                    tx.seq, start_index, end_index, index, e
                 );
                 fail_cnt += 1;
                 tokio::time::sleep(Duration::from_millis(RETRY_WAIT_MS)).await;
@@ -126,14 +131,34 @@ impl StreamDataFetcher {
         config: StreamConfig,
         store: Arc<RwLock<dyn Store>>,
         clients: Vec<HttpClient>,
+        admin_client: Option<HttpClient>,
         task_executor: TaskExecutor,
     ) -> Result<Self> {
         Ok(Self {
             config,
             store,
             clients,
+            admin_client,
             task_executor,
         })
+    }
+
+    async fn request_file(&self, tx_seq: u64) -> Result<()>{
+        match self.admin_client.clone() {
+            Some(client) => {
+                let status = client.get_sync_status(tx_seq).await?;
+                debug!("zgs node file(tx_seq={:?}) sync status: {:?}", tx_seq, status);
+                if status.starts_with("unknown") || status.starts_with("Failed") {
+                    debug!("requesting file(tx_seq={:?}) sync", tx_seq);
+                    client.start_sync_file(tx_seq).await?;
+                }
+                Ok(())
+            },
+            None => {
+                debug!("no admin client");
+                Ok(())
+            }
+        }
     }
 
     fn spawn_download_task(
@@ -151,7 +176,8 @@ impl StreamDataFetcher {
 
         self.task_executor.spawn(
             download_with_proof(
-                self.clients[*client_index].clone(),
+                self.clients.clone(),
+                *client_index,
                 tx,
                 start_index,
                 end_index,
@@ -241,6 +267,13 @@ impl StreamDataFetcher {
                             }
                             _ => {
                                 failed_tasks.insert(start_index, 1);
+                            }
+                        }
+
+                        match self.request_file(tx.seq).await {
+                            Ok(_) => {}
+                            Err(e) => {
+                                warn!("Failed to request file with tx seq {:?}, error: {}", tx.seq, e);
                             }
                         }
 

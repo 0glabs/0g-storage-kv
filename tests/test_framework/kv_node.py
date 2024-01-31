@@ -8,7 +8,7 @@ from utility.utils import (
     rpc_port,
     kv_rpc_port,
     blockchain_rpc_port,
-    assert_equal
+    assert_equal,
 )
 
 bytes_per_query = 1024 * 256
@@ -24,8 +24,10 @@ class KVNode(TestNode):
         log_contract_address,
         log,
         rpc_timeout=10,
-        stream_ids=[]
+        stream_ids=None,
     ):
+        if stream_ids is None:
+            stream_ids = []
         local_conf = KV_CONFIG.copy()
 
         indexed_config = {
@@ -33,7 +35,8 @@ class KVNode(TestNode):
             "rpc_listen_address": f"127.0.0.1:{kv_rpc_port(index)}",
             "log_contract_address": log_contract_address,
             "blockchain_rpc_endpoint": f"http://127.0.0.1:{blockchain_rpc_port(0)}",
-            "zgs_node_urls": f"http://127.0.0.1:{rpc_port(0)}"
+            "zgs_node_urls": f"http://127.0.0.1:{rpc_port(0)}",
+            "zgs_admin_url": f"http://127.0.0.1:{rpc_port(0)}",
         }
         # Set configs for this specific node.
         local_conf.update(indexed_config)
@@ -55,15 +58,13 @@ class KVNode(TestNode):
 
     def setup_config(self):
         os.mkdir(self.data_dir)
-        log_config_path = os.path.join(
-            self.data_dir, self.config["log_config_file"])
+        log_config_path = os.path.join(self.data_dir, self.config["log_config_file"])
         with open(log_config_path, "w") as f:
-            f.write("info")
+            f.write("debug")
         initialize_config(self.config_file, self.config)
 
     def wait_for_rpc_connection(self):
-        self._wait_for_rpc_connection(
-            lambda rpc: rpc.kv_getStatus() is not None)
+        self._wait_for_rpc_connection(lambda rpc: rpc.kv_getStatus() is not None)
 
     def start(self):
         self.log.info("Start kv node %d", self.index)
@@ -75,92 +76,82 @@ class KVNode(TestNode):
         if value is None:
             self.rpc_cnt += 1
             res = self.kv_get_value(stream_id, key, 0, 1, version)
-            assert_equal(b'', base64.b64decode(res['data'].encode("utf-8")))
-            assert res['size'] == 0
+            assert_equal(b"", base64.b64decode(res["data"].encode("utf-8")))
+            assert res["size"] == 0
             return
         while i < len(value):
             self.rpc_cnt += 1
-            res = self.kv_get_value(
-                stream_id, key, i, bytes_per_query, version)
+            res = self.kv_get_value(stream_id, key, i, bytes_per_query, version)
             if i + bytes_per_query < len(value):
-                assert_equal(base64.b64decode(
-                    res['data'].encode("utf-8")
-                ), value[i: i + bytes_per_query])
+                assert_equal(
+                    base64.b64decode(res["data"].encode("utf-8")),
+                    value[i : i + bytes_per_query],
+                )
             else:
-                assert_equal(base64.b64decode(
-                    res['data'].encode("utf-8")
-                ), value[i:])
+                assert_equal(base64.b64decode(res["data"].encode("utf-8")), value[i:])
             i += bytes_per_query
 
     def next(self, stream_id, key, version=None):
         global bytes_per_query
         start_index = 0
-        ans = {
-            'data': b''
-        }
+        ans = {"data": b""}
         while True:
             res = self.kv_get_next(
-                stream_id, key, start_index, bytes_per_query, version)
+                stream_id, key, start_index, bytes_per_query, version
+            )
             if res is None:
                 return None
-            ans['size'] = res['size']
-            ans['key'] = base64.b64decode(res['key'].encode("utf-8")).hex()
-            ans['data'] += base64.b64decode(res['data'].encode("utf-8"))
-            if len(ans['data']) == ans['size']:
+            ans["size"] = res["size"]
+            ans["key"] = base64.b64decode(res["key"].encode("utf-8")).hex()
+            ans["data"] += base64.b64decode(res["data"].encode("utf-8"))
+            if len(ans["data"]) == ans["size"]:
                 return ans
             start_index += bytes_per_query
 
     def prev(self, stream_id, key, version=None):
         global bytes_per_query
         start_index = 0
-        ans = {
-            'data': b''
-        }
+        ans = {"data": b""}
         while True:
             res = self.kv_get_prev(
-                stream_id, key, start_index, bytes_per_query, version)
+                stream_id, key, start_index, bytes_per_query, version
+            )
             if res is None:
                 return None
-            ans['size'] = res['size']
-            ans['key'] = base64.b64decode(res['key'].encode("utf-8")).hex()
-            ans['data'] += base64.b64decode(res['data'].encode("utf-8"))
-            if len(ans['data']) == ans['size']:
+            ans["size"] = res["size"]
+            ans["key"] = base64.b64decode(res["key"].encode("utf-8")).hex()
+            ans["data"] += base64.b64decode(res["data"].encode("utf-8"))
+            if len(ans["data"]) == ans["size"]:
                 return ans
             start_index += bytes_per_query
 
     def seek_to_first(self, stream_id, version=None):
         global bytes_per_query
         start_index = 0
-        ans = {
-            'data': b''
-        }
+        ans = {"data": b""}
         while True:
-            res = self.kv_get_first(
-                stream_id, start_index, bytes_per_query, version)
+            res = self.kv_get_first(stream_id, start_index, bytes_per_query, version)
             if res is None:
                 return None
-            ans['size'] = res['size']
-            ans['key'] = base64.b64decode(res['key'].encode("utf-8")).hex()
-            ans['data'] += base64.b64decode(res['data'].encode("utf-8"))
-            if len(ans['data']) == ans['size']:
+            ans["size"] = res["size"]
+            ans["key"] = base64.b64decode(res["key"].encode("utf-8")).hex()
+            ans["data"] += base64.b64decode(res["data"].encode("utf-8"))
+            if len(ans["data"]) == ans["size"]:
                 return ans
             start_index += bytes_per_query
 
     def seek_to_last(self, stream_id, version=None):
         global bytes_per_query
         start_index = 0
-        ans = {
-            'data': b''
-        }
+        ans = {"data": b""}
         while True:
-            res = self.kv_get_last(
-                stream_id, start_index, bytes_per_query, version)
+            res = self.kv_get_last(stream_id, start_index, bytes_per_query, version)
             if res is None:
                 return None
-            ans['size'] = res['size']
-            ans['key'] = base64.b64decode(res['key'].encode("utf-8")).hex()
-            ans['data'] += base64.b64decode(res['data'].encode("utf-8"))
-            if len(ans['data']) == ans['size']:
+            ans["size"] = res["size"]
+            ans["key"] = base64.b64decode(res["key"].encode("utf-8")).hex()
+            ans["data"] += base64.b64decode(res["data"].encode("utf-8"))
+            if len(ans["data"]) == ans["size"]:
                 return ans
             start_index += bytes_per_query
 
@@ -169,13 +160,19 @@ class KVNode(TestNode):
 
     # rpc
     def kv_get_value(self, stream_id, key, start_index, size, version=None):
-        return self.rpc.kv_getValue([stream_id, self.hex_to_segment(key), start_index, size, version])
+        return self.rpc.kv_getValue(
+            [stream_id, self.hex_to_segment(key), start_index, size, version]
+        )
 
     def kv_get_next(self, stream_id, key, start_index, size, version=None):
-        return self.rpc.kv_getNext([stream_id, self.hex_to_segment(key), start_index, size, False, version])
+        return self.rpc.kv_getNext(
+            [stream_id, self.hex_to_segment(key), start_index, size, False, version]
+        )
 
     def kv_get_prev(self, stream_id, key, start_index, size, version=None):
-        return self.rpc.kv_getPrev([stream_id, self.hex_to_segment(key), start_index, size, False, version])
+        return self.rpc.kv_getPrev(
+            [stream_id, self.hex_to_segment(key), start_index, size, False, version]
+        )
 
     def kv_get_first(self, stream_id, start_index, size, version=None):
         return self.rpc.kv_getFirst([stream_id, start_index, size, version])
@@ -190,7 +187,9 @@ class KVNode(TestNode):
         return self.rpc.kv_getHoldingStreamIds()
 
     def kv_has_write_permission(self, account, stream_id, key, version=None):
-        return self.rpc.kv_hasWritePermission([account, stream_id, self.hex_to_segment(key), version])
+        return self.rpc.kv_hasWritePermission(
+            [account, stream_id, self.hex_to_segment(key), version]
+        )
 
     def kv_is_admin(self, account, stream_id, version=None):
         return self.rpc.kv_isAdmin([account, stream_id, version])
@@ -199,7 +198,9 @@ class KVNode(TestNode):
         return self.rpc.kv_isSpecialKey([stream_id, self.hex_to_segment(key), version])
 
     def kv_is_writer_of_key(self, account, stream_id, key, version=None):
-        return self.rpc.kv_isWriterOfKey([account, stream_id, self.hex_to_segment(key), version])
+        return self.rpc.kv_isWriterOfKey(
+            [account, stream_id, self.hex_to_segment(key), version]
+        )
 
     def kv_is_writer_of_stream(self, account, stream_id, version=None):
         return self.rpc.kv_isWriterOfStream([account, stream_id, version])

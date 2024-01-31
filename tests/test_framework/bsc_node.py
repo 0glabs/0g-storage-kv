@@ -41,8 +41,7 @@ class BSCNode(BlockchainNode):
         # Overwrite with personalized configs.
         local_conf.update(updated_config)
         data_dir = os.path.join(root_dir, "blockchain_node" + str(index))
-        rpc_url = "http://" + \
-            local_conf["HTTPHost"] + ":" + str(local_conf["HTTPPort"])
+        rpc_url = "http://" + local_conf["HTTPHost"] + ":" + str(local_conf["HTTPPort"])
 
         self.genesis_config = os.path.join(
             __file_path__, "..", "config", "genesis.json"
@@ -125,8 +124,7 @@ class BSCNode(BlockchainNode):
         ret = self.process.poll()
         assert ret == 0, "BSC init should be successful"
 
-        self.log.info(
-            "BSC node%d init finished with return code %d", self.index, ret)
+        self.log.info("BSC node%d init finished with return code %d", self.index, ret)
 
         config_file = os.path.join(__file_path__, "..", "config", "bsc.toml")
         target = os.path.join(self.data_dir, "bsc.toml")

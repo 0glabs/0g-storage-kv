@@ -57,7 +57,7 @@ def run_single_test(py, script, test_dir, index, port_min, port_max):
 
 
 def run():
-    dir_name = os.path.join(__file_path__, "utility")
+    dir_name = os.path.join(__file_path__, "tmp")
     if not os.path.exists(dir_name):
         os.makedirs(dir_name, exist_ok=True)
 

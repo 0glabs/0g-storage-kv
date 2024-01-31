@@ -4,7 +4,7 @@ from config.node_config import ZGS_CONFIG
 from test_framework.blockchain_node import NodeType, TestNode
 from config.node_config import MINER_ID
 from utility.utils import (
-    initialize_config,
+    initialize_toml_config,
     p2p_port,
     rpc_port,
     blockchain_rpc_port,
@@ -37,6 +37,7 @@ class ZgsNode(TestNode):
             "network_libp2p_port": p2p_port(index),
             "network_discovery_port": p2p_port(index),
             "rpc_listen_address": f"127.0.0.1:{rpc_port(index)}",
+            "rpc_listen_address_admin": "",
             "network_libp2p_nodes": libp2p_nodes,
             "log_contract_address": log_contract_address,
             "mine_contract_address": mine_contract_address,
@@ -61,15 +62,14 @@ class ZgsNode(TestNode):
 
     def setup_config(self):
         os.mkdir(self.data_dir)
-        log_config_path = os.path.join(
-            self.data_dir, self.config["log_config_file"])
+        log_config_path = os.path.join(self.data_dir, self.config["log_config_file"])
         with open(log_config_path, "w") as f:
-            f.write("trace")
-        initialize_config(self.config_file, self.config)
+            f.write("debug")
+
+        initialize_toml_config(self.config_file, self.config)
 
     def wait_for_rpc_connection(self):
-        self._wait_for_rpc_connection(
-            lambda rpc: rpc.zgs_getStatus() is not None)
+        self._wait_for_rpc_connection(lambda rpc: rpc.zgs_getStatus() is not None)
 
     def start(self):
         self.log.info("Start zgs node %d", self.index)

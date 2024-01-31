@@ -67,8 +67,7 @@ class ConfluxNode(BlockchainNode):
             + str(local_conf["jsonrpc_local_http_port"])
         )
 
-        self.core_space_rpc = SimpleRpcProxy(
-            core_space_rpc_url, timeout=rpc_timeout)
+        self.core_space_rpc = SimpleRpcProxy(core_space_rpc_url, timeout=rpc_timeout)
 
         super().__init__(
             index,
@@ -206,8 +205,7 @@ def sync_blocks(rpc_connections, *, sync_count=True, wait=1, timeout=60):
         best_hash = [x.best_block_hash() for x in rpc_connections]
         block_count = [x.getblockcount() for x in rpc_connections]
         if best_hash.count(best_hash[0]) == len(rpc_connections) and (
-            not sync_count or block_count.count(
-                block_count[0]) == len(rpc_connections)
+            not sync_count or block_count.count(block_count[0]) == len(rpc_connections)
         ):
             return
         time.sleep(wait)

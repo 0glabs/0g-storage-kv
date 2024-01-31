@@ -17,8 +17,7 @@ def add_0x_prefix(val):
 
 
 class Hasher:
-    def __init__(self, algorithm="keccak_256",
-                 encoding="utf-8", security=False):
+    def __init__(self, algorithm="keccak_256", encoding="utf-8", security=False):
         self.algorithm = algorithm
         self.security = security
         self.encoding = encoding
@@ -215,16 +214,14 @@ class MerkleTree:
             }
 
         proof = {"lemma": [], "path": []}
-        proof["lemma"].append(add_0x_prefix(
-            self.decode_value(self.__leaves[i].value)))
+        proof["lemma"].append(add_0x_prefix(self.decode_value(self.__leaves[i].value)))
 
         current = self.__leaves[i]
         while current != self.__root:
             if current.parent is not None and current.parent.left == current:
                 # add right
                 proof["lemma"].append(
-                    add_0x_prefix(self.decode_value(
-                        current.parent.right.value))
+                    add_0x_prefix(self.decode_value(current.parent.right.value))
                 )
                 proof["path"].append(True)
             else:
@@ -237,6 +234,5 @@ class MerkleTree:
             current = current.parent
 
         # add root
-        proof["lemma"].append(add_0x_prefix(
-            self.decode_value(self.get_root_hash())))
+        proof["lemma"].append(add_0x_prefix(self.decode_value(self.get_root_hash())))
         return proof

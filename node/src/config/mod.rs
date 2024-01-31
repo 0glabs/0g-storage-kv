@@ -27,6 +27,7 @@ build_config! {
     (rpc_listen_address, (String), "127.0.0.1:5678".to_string())
     (rpc_chunks_per_segment, (usize), 1024)
     (zgs_node_urls, (String), "http://127.0.0.1:5678".to_string())
+    (zgs_admin_url, (String), "".to_string())
     (max_query_len_in_bytes, (u64), 1024 * 256) // 256 KB
     (max_response_body_in_bytes, (u32), 1024 * 1024 * 30) // 30MB
 

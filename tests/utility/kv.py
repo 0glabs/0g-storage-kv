@@ -44,11 +44,21 @@ class AccessControlOps(Enum):
 
     @staticmethod
     def grant_special_writer_role(stream_id, key, address):
-        return [AccessControlOps.GRANT_SPECIAL_WRITER_ROLE, stream_id, key, to_address(address)]
+        return [
+            AccessControlOps.GRANT_SPECIAL_WRITER_ROLE,
+            stream_id,
+            key,
+            to_address(address),
+        ]
 
     @staticmethod
     def revoke_special_writer_role(stream_id, key, address):
-        return [AccessControlOps.REVOKE_SPECIAL_WRITER_ROLE, stream_id, key, to_address(address)]
+        return [
+            AccessControlOps.REVOKE_SPECIAL_WRITER_ROLE,
+            stream_id,
+            key,
+            to_address(address),
+        ]
 
     @staticmethod
     def renounce_special_writer_role(stream_id, key):
@@ -60,14 +70,16 @@ op_with_key = [
     AccessControlOps.SET_KEY_TO_NORMAL,
     AccessControlOps.GRANT_SPECIAL_WRITER_ROLE,
     AccessControlOps.REVOKE_SPECIAL_WRITER_ROLE,
-    AccessControlOps.RENOUNCE_SPECIAL_WRITER_ROLE]
+    AccessControlOps.RENOUNCE_SPECIAL_WRITER_ROLE,
+]
 
 op_with_address = [
     AccessControlOps.GRANT_ADMIN_ROLE,
     AccessControlOps.GRANT_WRITER_ROLE,
     AccessControlOps.REVOKE_WRITER_ROLE,
     AccessControlOps.GRANT_SPECIAL_WRITER_ROLE,
-    AccessControlOps.REVOKE_SPECIAL_WRITER_ROLE]
+    AccessControlOps.REVOKE_SPECIAL_WRITER_ROLE,
+]
 
 
 MAX_STREAM_ID = 100
@@ -77,23 +89,24 @@ MAX_U64 = (1 << 64) - 1
 MAX_KEY_LEN = 2000
 
 STREAM_DOMAIN = bytes.fromhex(
-    "df2ff3bb0af36c6384e6206552a4ed807f6f6a26e7d0aa6bff772ddc9d4307aa")
+    "df2ff3bb0af36c6384e6206552a4ed807f6f6a26e7d0aa6bff772ddc9d4307aa"
+)
 
 
 def with_prefix(x):
     x = x.lower()
-    if not x.startswith('0x'):
-        x = '0x' + x
+    if not x.startswith("0x"):
+        x = "0x" + x
     return x
 
 
 def pad(x, l):
     ans = hex(x)[2:]
-    return '0' * (l - len(ans)) + ans
+    return "0" * (l - len(ans)) + ans
 
 
 def to_address(x):
-    if x.startswith('0x'):
+    if x.startswith("0x"):
         return x[2:]
     return x
 
@@ -111,13 +124,19 @@ def rand_key():
     len = random.randrange(1, MAX_KEY_LEN)
     if len % 2 == 1:
         len += 1
-    return ''.join([hex(random.randrange(16))[2:] for i in range(len)])
+    return "".join([hex(random.randrange(16))[2:] for i in range(len)])
 
 
 def rand_write(stream_id=None, key=None, size=None):
-    return [to_stream_id(random.randrange(0, MAX_STREAM_ID)) if stream_id is None else stream_id,
-            rand_key() if key is None else key,
-            random.randrange(MIN_DATA_LENGTH, MAX_DATA_LENGTH) if size is None else size]
+    return [
+        (
+            to_stream_id(random.randrange(0, MAX_STREAM_ID))
+            if stream_id is None
+            else stream_id
+        ),
+        rand_key() if key is None else key,
+        random.randrange(MIN_DATA_LENGTH, MAX_DATA_LENGTH) if size is None else size,
+    ]
 
 
 def is_access_control_permission_denied(x):
@@ -130,6 +149,7 @@ def is_write_permission_denied(x):
     if x is None:
         return False
     return x.startswith("WritePermissionDenied")
+
 
 # reads: array of [stream_id, key]
 # writes: array of [stream_id, key, data_length]
@@ -179,5 +199,5 @@ def create_kv_data(version, reads, writes, access_controls):
             k += 1
     tags = list(set(tags))
     tags = sorted(tags)
-    tags = STREAM_DOMAIN + bytes.fromhex(''.join(tags))
+    tags = STREAM_DOMAIN + bytes.fromhex("".join(tags))
     return data, tags

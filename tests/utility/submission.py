@@ -1,4 +1,6 @@
 import base64
+
+from eth_utils import encode_hex, decode_hex
 from math import log2
 from utility.merkle_tree import add_0x_prefix, Leaf, MerkleTree
 
@@ -44,8 +46,7 @@ def create_submission(data, tags=b""):
         nodes.append(node_hash)
 
         height = int(log2(chunks))
-        submission[2].append(
-            [add_0x_prefix(node_hash.decode("utf-8")), height])
+        submission[2].append([decode_hex(node_hash.decode("utf-8")), height])
         offset += chunks * ENTRY_SIZE
 
     root_hash = nodes[-1]
@@ -92,8 +93,7 @@ def create_node(data, offset, chunks):
     if chunks > PORA_CHUNK_SIZE:
         batch = PORA_CHUNK_SIZE
 
-    return create_segment_node(
-        data, offset, ENTRY_SIZE * batch, ENTRY_SIZE * chunks)
+    return create_segment_node(data, offset, ENTRY_SIZE * batch, ENTRY_SIZE * chunks)
 
 
 def create_segment_node(data, offset, batch, size):
@@ -107,8 +107,7 @@ def create_segment_node(data, offset, batch, size):
         if start >= n:
             tree.add_leaf(Leaf(segment_root(b"\x00" * (end - start))))
         elif end > n:
-            tree.add_leaf(
-                Leaf(segment_root(data[start:] + b"\x00" * (end - n))))
+            tree.add_leaf(Leaf(segment_root(data[start:] + b"\x00" * (end - n))))
         else:
             tree.add_leaf(Leaf(segment_root(data[start:end])))
 
@@ -124,7 +123,7 @@ def segment_root(chunks):
 
     tree = MerkleTree()
     for i in range(0, data_len, ENTRY_SIZE):
-        tree.encrypt(chunks[i: i + ENTRY_SIZE])
+        tree.encrypt(chunks[i : i + ENTRY_SIZE])
 
     return tree.get_root_hash()
 
@@ -139,11 +138,10 @@ def generate_merkle_tree(data):
             tree.encrypt(b"\x00" * ENTRY_SIZE)
         elif (i + 1) * ENTRY_SIZE > len(data):
             tree.encrypt(
-                data[i * ENTRY_SIZE:] + b"\x00" *
-                ((i + 1) * ENTRY_SIZE - len(data))
+                data[i * ENTRY_SIZE :] + b"\x00" * ((i + 1) * ENTRY_SIZE - len(data))
             )
         else:
-            tree.encrypt(data[i * ENTRY_SIZE: (i + 1) * ENTRY_SIZE])
+            tree.encrypt(data[i * ENTRY_SIZE : (i + 1) * ENTRY_SIZE])
 
     return tree
 
@@ -158,8 +156,7 @@ def generate_merkle_tree_by_batch(data):
             tree.add_leaf(
                 Leaf(
                     segment_root(
-                        b"\x00" * ENTRY_SIZE *
-                        min(PORA_CHUNK_SIZE, padded_chunks - i)
+                        b"\x00" * ENTRY_SIZE * min(PORA_CHUNK_SIZE, padded_chunks - i)
                     )
                 )
             )
@@ -167,7 +164,7 @@ def generate_merkle_tree_by_batch(data):
             tree.add_leaf(
                 Leaf(
                     segment_root(
-                        data[i * ENTRY_SIZE:]
+                        data[i * ENTRY_SIZE :]
                         + b"\x00"
                         * (
                             min(padded_chunks, i + PORA_CHUNK_SIZE) * ENTRY_SIZE
@@ -180,8 +177,7 @@ def generate_merkle_tree_by_batch(data):
             tree.add_leaf(
                 Leaf(
                     segment_root(
-                        data[i *
-                             ENTRY_SIZE: (i + PORA_CHUNK_SIZE) * ENTRY_SIZE]
+                        data[i * ENTRY_SIZE : (i + PORA_CHUNK_SIZE) * ENTRY_SIZE]
                     )
                 )
             )
@@ -202,12 +198,12 @@ def submit_data(client, data):
             data[
                 idx
                 * ENTRY_SIZE
-                * PORA_CHUNK_SIZE: (idx + 1)
+                * PORA_CHUNK_SIZE : (idx + 1)
                 * ENTRY_SIZE
                 * PORA_CHUNK_SIZE
             ]
             if len(data) >= (idx + 1) * PORA_CHUNK_SIZE * ENTRY_SIZE
-            else data[idx * ENTRY_SIZE * PORA_CHUNK_SIZE:]
+            else data[idx * ENTRY_SIZE * PORA_CHUNK_SIZE :]
             + b"\x00" * (chunks * ENTRY_SIZE - len(data))
         )
 

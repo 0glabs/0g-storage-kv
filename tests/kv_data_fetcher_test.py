@@ -21,15 +21,22 @@ from config.node_config import TX_PARAMS, TX_PARAMS1, GENESIS_ACCOUNT, GENESIS_A
 class DataFetcherTest(TestFramework):
     def setup_params(self):
         self.num_blockchain_nodes = 1
-        self.num_nodes = 2
+        self.num_nodes = 3
+        for i in range(self.num_nodes):
+            self.zgs_node_configs[i] = {
+                "find_peer_timeout_secs": 1,
+                "confirmation_block_count": 1,
+            }
 
     def run_test(self):
         # setup kv node, watch stream with id [0,100)
         self.stream_ids = [to_stream_id(i) for i in range(MAX_STREAM_ID)]
         self.stream_ids.reverse()
 
+        # connect to node #1&2, upload data to #0
         updated_config = {
-            "zgs_node_urls": f"http://127.0.0.1:{rpc_port(0)},http://127.0.0.1:{rpc_port(1)}"
+            "zgs_node_urls": f"http://127.0.0.1:{rpc_port(1)},http://127.0.0.1:{rpc_port(2)}",
+            "zgs_admin_url": f"http://127.0.0.1:{rpc_port(1)}",
         }
 
         self.setup_kv_node(0, self.stream_ids, updated_config)
@@ -55,19 +62,16 @@ class DataFetcherTest(TestFramework):
         given_tags=None,
         trunc=False,
     ):
-        chunk_data, tags = create_kv_data(
-            version, reads, writes, access_controls)
+        chunk_data, tags = create_kv_data(version, reads, writes, access_controls)
         if trunc:
             chunk_data = chunk_data[
                 : random.randrange(len(chunk_data) // 2, len(chunk_data))
             ]
-        print(len(chunk_data))
         submissions, data_root = create_submission(
             chunk_data, tags if given_tags is None else given_tags
         )
         self.contract.submit(submissions, tx_params=tx_params)
-        wait_until(lambda: self.contract.num_submissions()
-                   == self.next_tx_seq + 1)
+        wait_until(lambda: self.contract.num_submissions() == self.next_tx_seq + 1)
 
         client = self.nodes[0]
         wait_until(lambda: client.zgs_get_file_info(data_root) is not None)
@@ -84,8 +88,7 @@ class DataFetcherTest(TestFramework):
         writes = [rand_write() for i in range(20)]
         self.submit(MAX_U64, [], writes, [])
         wait_until(
-            lambda: self.kv_nodes[0].kv_get_trasanction_result(
-                self.next_tx_seq)
+            lambda: self.kv_nodes[0].kv_get_trasanction_result(self.next_tx_seq)
             == "Commit",
         )
         first_version = self.next_tx_seq
@@ -97,12 +100,11 @@ class DataFetcherTest(TestFramework):
             stream_id, key = stream_id_key.split(",")
             self.kv_nodes[0].check_equal(stream_id, key, value)
             assert_equal(
-                self.kv_nodes[0].kv_is_admin(
-                    GENESIS_ACCOUNT.address, stream_id), True
+                self.kv_nodes[0].kv_is_admin(GENESIS_ACCOUNT.address, stream_id), True
             )
 
-        # stop one node, download should also successful
-        self.stop_storage_node(1)
+        # stop one node, download should still be successful
+        self.stop_storage_node(2)
 
         writes = []
         for stream_id_key, value in self.data.items():
@@ -110,8 +112,7 @@ class DataFetcherTest(TestFramework):
             writes.append(rand_write(stream_id, key))
         self.submit(first_version, [], writes, [])
         wait_until(
-            lambda: self.kv_nodes[0].kv_get_trasanction_result(
-                self.next_tx_seq)
+            lambda: self.kv_nodes[0].kv_get_trasanction_result(self.next_tx_seq)
             == "Commit",
             timeout=180,
         )
@@ -129,5 +130,6 @@ class DataFetcherTest(TestFramework):
 
 
 if __name__ == "__main__":
-    DataFetcherTest(blockchain_node_configs=dict(
-        [(0, dict(mode="dev", dev_block_interval_ms=50))])).main()
+    DataFetcherTest(
+        blockchain_node_configs=dict([(0, dict(mode="dev", dev_block_interval_ms=50))])
+    ).main()

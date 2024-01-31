@@ -504,8 +504,7 @@ def parse_as_bin(s):
 
 
 def parse_as_int(s):
-    return s if is_numeric(s) else int(
-        "0" + s[2:], 16) if s[:2] == "0x" else int(s)
+    return s if is_numeric(s) else int("0" + s[2:], 16) if s[:2] == "0x" else int(s)
 
 
 def print_func_call(ignore_first_arg=False, max_call_number=100):

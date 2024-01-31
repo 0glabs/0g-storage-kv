@@ -52,6 +52,14 @@ impl ZgsKVConfig {
             chunks_per_segment: self.rpc_chunks_per_segment,
             zgs_nodes: to_zgs_nodes(self.zgs_node_urls.clone())
                 .map_err(|e| format!("failed to parse zgs_node_urls: {}", e))?,
+            admin_node_address: if self.zgs_admin_url.is_empty() {
+                None
+            } else {
+                self.zgs_admin_url
+                    .parse::<Uri>()
+                    .map_err(|e| format!("Invalid URL: {}", e))?;
+                Some(self.zgs_admin_url.clone())
+            },
             max_query_len_in_bytes: self.max_query_len_in_bytes,
             max_response_body_in_bytes: self.max_response_body_in_bytes,
         })

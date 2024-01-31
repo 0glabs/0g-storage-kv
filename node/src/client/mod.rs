@@ -4,7 +4,7 @@ mod builder;
 mod environment;
 
 pub use builder::ClientBuilder;
-pub use environment::{Environment, EnvironmentBuilder, RuntimeContext};
+pub use environment::{EnvironmentBuilder, RuntimeContext};
 
 /// The core Zgs client.
 ///

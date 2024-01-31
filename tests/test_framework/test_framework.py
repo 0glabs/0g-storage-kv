@@ -34,7 +34,11 @@ TEST_EXIT_FAILED = 1
 
 
 class TestFramework:
-    def __init__(self, blockchain_node_type=BlockChainNodeType.Conflux, blockchain_node_configs={}):
+    def __init__(
+        self,
+        blockchain_node_type=BlockChainNodeType.Conflux,
+        blockchain_node_configs={},
+    ):
         self.num_blockchain_nodes = None
         self.num_nodes = None
         self.blockchain_nodes = []
@@ -57,11 +61,15 @@ class TestFramework:
         self.__default_zgs_node_binary__ = os.path.join(
             root_dir, "zerog-storage-rust", "target", "release", "zgs_node" + binary_ext
         )
-        self.__default_zgs_cli_binary__ = os.path.join(__file_path__,
-            root_dir, "zerog-storage-rust", "target", "zgs-client"  + binary_ext
+        self.__default_zgs_cli_binary__ = os.path.join(
+            __file_path__,
+            root_dir,
+            "zerog-storage-rust",
+            "target",
+            "zerog-storage-client" + binary_ext,
         )
-        self.__default_zgs_kv_binary__ = os.path.join(__file_path__,
-            root_dir, "target", "release", "zgs_kv" + binary_ext
+        self.__default_zgs_kv_binary__ = os.path.join(
+            __file_path__, root_dir, "target", "release", "zgs_kv" + binary_ext
         )
 
     def __setup_blockchain_node(self):
@@ -109,8 +117,7 @@ class TestFramework:
 
         if self.blockchain_node_type == BlockChainNodeType.BSC:
             enodes = set(
-                [node.admin_nodeInfo()["enode"]
-                 for node in self.blockchain_nodes[1:]]
+                [node.admin_nodeInfo()["enode"] for node in self.blockchain_nodes[1:]]
             )
             for enode in enodes:
                 self.blockchain_nodes[0].admin_addPeer([enode])
@@ -144,11 +151,9 @@ class TestFramework:
                 connect_sample_nodes(self.blockchain_nodes, self.log)
                 sync_blocks(self.blockchain_nodes)
 
-        contract, tx_hash, mine_contract = self.blockchain_nodes[0].setup_contract(
-        )
+        contract, tx_hash, mine_contract = self.blockchain_nodes[0].setup_contract()
         self.contract = FlowContractProxy(contract, self.blockchain_nodes)
-        self.mine_contract = MineContractProxy(
-            mine_contract, self.blockchain_nodes)
+        self.mine_contract = MineContractProxy(mine_contract, self.blockchain_nodes)
 
         for node in self.blockchain_nodes[1:]:
             node.wait_for_transaction(tx_hash)
@@ -211,7 +216,7 @@ class TestFramework:
         )
 
         parser.add_argument(
-            "--zgs-client",
+            "--zerog-storage-client",
             dest="cli",
             default=self.__default_zgs_cli_binary__,
             type=str,
@@ -270,8 +275,7 @@ class TestFramework:
             "--randomseed", dest="random_seed", type=int, help="Set a random seed"
         )
 
-        parser.add_argument("--port-min", dest="port_min",
-                            default=11000, type=int)
+        parser.add_argument("--port-min", dest="port_min", default=11000, type=int)
 
         parser.add_argument(
             "--pdbonfailure",
@@ -325,8 +329,7 @@ class TestFramework:
         ionion_node_rpc_url,
         file_to_upload,
     ):
-        assert os.path.exists(
-            self.cli_binary), "%s should be exist" % self.cli_binary
+        assert os.path.exists(self.cli_binary), "%s should be exist" % self.cli_binary
         upload_args = [
             self.cli_binary,
             "upload",
@@ -356,7 +359,7 @@ class TestFramework:
             self.log.debug("line: %s", line)
             if "root" in line:
                 index = line.find("root=")
-                root = line[index + 5: -1]
+                root = line[index + 5 : -1]
                 self.log.info("root: %s", root)
 
         assert proc.returncode == 0, "%s upload file failed" % self.cli_binary
@@ -373,9 +376,7 @@ class TestFramework:
         self.__setup_zgs_node()
 
     def setup_kv_node(self, index, stream_ids, updated_config={}):
-        assert os.path.exists(self.kv_binary), (
-            "%s should be exist" % self.kv_binary
-        )
+        assert os.path.exists(self.kv_binary), "%s should be exist" % self.kv_binary
         node = KVNode(
             index,
             self.root_dir,
@@ -484,8 +485,7 @@ class TestFramework:
         except KeyboardInterrupt as e:
             self.log.warning("Exiting after keyboard interrupt %s", repr(e))
         except Exception as e:
-            self.log.error("Test exception %s %s",
-                           repr(e), traceback.format_exc())
+            self.log.error("Test exception %s %s", repr(e), traceback.format_exc())
             self.log.error(f"Test data are not deleted: {self.root_dir}")
 
         if success == TestStatus.FAILED and self.options.pdbonfailure:

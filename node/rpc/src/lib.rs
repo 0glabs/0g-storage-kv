@@ -5,6 +5,7 @@ mod config;
 mod error;
 mod kv_rpc_server;
 mod types;
+mod zgs_admin_client;
 mod zgs_rpc_client;
 
 use futures::channel::mpsc::Sender;
@@ -17,6 +18,7 @@ use std::sync::Arc;
 use storage_with_stream::Store;
 use task_executor::ShutdownReason;
 use tokio::sync::RwLock;
+pub use zgs_admin_client::ZgsAdminClient;
 pub use zgs_rpc_client::ZgsRpcClient;
 
 pub use config::Config as RPCConfig;
@@ -31,11 +33,15 @@ pub struct Context {
     pub store: Arc<RwLock<dyn Store>>,
 }
 
+pub fn build_client(url: &String) -> Result<HttpClient, Box<dyn Error>> {
+    Ok(HttpClientBuilder::default().build(url)?)
+}
+
 pub fn zgs_clients(ctx: &Context) -> Result<Vec<HttpClient>, Box<dyn Error>> {
     ctx.config
         .zgs_nodes
         .iter()
-        .map(|url| Ok(HttpClientBuilder::default().build(url)?))
+        .map(build_client)
         .collect()
 }
 

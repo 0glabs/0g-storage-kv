@@ -34,6 +34,7 @@ pub struct ClientBuilder {
     runtime_context: Option<RuntimeContext>,
     store: Option<Arc<RwLock<dyn Store>>>,
     zgs_clients: Option<Vec<HttpClient>>,
+    admin_client: Option<Option<HttpClient>>,
     log_sync: Option<LogSyncComponents>,
 }
 
@@ -92,6 +93,11 @@ impl ClientBuilder {
         self.zgs_clients = Some(
             rpc::zgs_clients(&ctx).map_err(|e| format!("Unable to create rpc client: {:?}", e))?,
         );
+        self.admin_client = Some(if let Some(url) = ctx.config.admin_node_address.clone() {
+            Some(rpc::build_client(&url).map_err(|e| format!("Unable to create admin client: {:?}", e))?)
+        } else {
+            None
+        });
 
         let rpc_handle = rpc::run_server(ctx)
             .await
@@ -106,8 +112,9 @@ impl ClientBuilder {
         let executor = require!("stream", self, runtime_context).clone().executor;
         let store = require!("stream", self, store).clone();
         let zgs_clients = require!("stream", self, zgs_clients).clone();
+        let admin_client = require!("stream", self, admin_client).clone();
         let (stream_data_fetcher, stream_replayer) =
-            StreamManager::initialize(config, store, zgs_clients, executor.clone())
+            StreamManager::initialize(config, store, zgs_clients, admin_client, executor.clone())
                 .await
                 .map_err(|e| e.to_string())?;
         StreamManager::spawn(stream_data_fetcher, stream_replayer, executor)
