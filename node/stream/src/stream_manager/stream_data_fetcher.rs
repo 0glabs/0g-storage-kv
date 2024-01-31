@@ -11,7 +11,6 @@ use std::{
     time::Duration,
 };
 
-
 use storage_with_stream::{log_store::log_manager::ENTRY_SIZE, Store};
 use task_executor::TaskExecutor;
 use tokio::sync::{
@@ -44,7 +43,10 @@ async fn download_with_proof(
     let mut fail_cnt = 0;
     while fail_cnt < clients.len() {
         let index = (client_index + fail_cnt) % clients.len();
-        debug!("download_with_proof for tx_seq: {}, start_index: {}, end_index {} from client #{}", tx.seq, start_index, end_index, index);
+        debug!(
+            "download_with_proof for tx_seq: {}, start_index: {}, end_index {} from client #{}",
+            tx.seq, start_index, end_index, index
+        );
         match clients[index]
             .download_segment_with_proof(tx.data_merkle_root, start_index / ENTRIES_PER_SEGMENT)
             .await
@@ -143,17 +145,20 @@ impl StreamDataFetcher {
         })
     }
 
-    async fn request_file(&self, tx_seq: u64) -> Result<()>{
+    async fn request_file(&self, tx_seq: u64) -> Result<()> {
         match self.admin_client.clone() {
             Some(client) => {
                 let status = client.get_sync_status(tx_seq).await?;
-                debug!("zgs node file(tx_seq={:?}) sync status: {:?}", tx_seq, status);
+                debug!(
+                    "zgs node file(tx_seq={:?}) sync status: {:?}",
+                    tx_seq, status
+                );
                 if status.starts_with("unknown") || status.starts_with("Failed") {
                     debug!("requesting file(tx_seq={:?}) sync", tx_seq);
                     client.start_sync_file(tx_seq).await?;
                 }
                 Ok(())
-            },
+            }
             None => {
                 debug!("no admin client");
                 Ok(())
@@ -273,7 +278,10 @@ impl StreamDataFetcher {
                         match self.request_file(tx.seq).await {
                             Ok(_) => {}
                             Err(e) => {
-                                warn!("Failed to request file with tx seq {:?}, error: {}", tx.seq, e);
+                                warn!(
+                                    "Failed to request file with tx seq {:?}, error: {}",
+                                    tx.seq, e
+                                );
                             }
                         }
 

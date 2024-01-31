@@ -38,11 +38,7 @@ pub fn build_client(url: &String) -> Result<HttpClient, Box<dyn Error>> {
 }
 
 pub fn zgs_clients(ctx: &Context) -> Result<Vec<HttpClient>, Box<dyn Error>> {
-    ctx.config
-        .zgs_nodes
-        .iter()
-        .map(build_client)
-        .collect()
+    ctx.config.zgs_nodes.iter().map(build_client).collect()
 }
 
 pub async fn run_server(ctx: Context) -> Result<HttpServerHandle, Box<dyn Error>> {

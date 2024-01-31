@@ -94,7 +94,10 @@ impl ClientBuilder {
             rpc::zgs_clients(&ctx).map_err(|e| format!("Unable to create rpc client: {:?}", e))?,
         );
         self.admin_client = Some(if let Some(url) = ctx.config.admin_node_address.clone() {
-            Some(rpc::build_client(&url).map_err(|e| format!("Unable to create admin client: {:?}", e))?)
+            Some(
+                rpc::build_client(&url)
+                    .map_err(|e| format!("Unable to create admin client: {:?}", e))?,
+            )
         } else {
             None
         });
