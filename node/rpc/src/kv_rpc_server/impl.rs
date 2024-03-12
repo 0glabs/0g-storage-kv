@@ -6,7 +6,7 @@ use crate::types::Segment;
 use crate::types::ValueSegment;
 use crate::Context;
 use ethereum_types::H160;
-use shared_types::KeyValuePair;
+use kv_types::KeyValuePair;
 use storage_with_stream::log_store::log_manager::ENTRY_SIZE;
 
 use super::api::KeyValueRpcServer;

@@ -1,0 +1,15 @@
+stream_ids = ["000000000000000000000000000000000000000000000000000000000000f2bd"]
+
+
+db_dir = "db"
+kv_db_dir = "kv.DB"
+
+rpc_enabled = true
+rpc_listen_address = "127.0.0.1:7890"
+zgs_node_urls = "http://127.0.0.1:5678,http://127.0.0.1:6789"
+
+log_config_file = "log_config"
+
+blockchain_rpc_endpoint = "https://evmtestnet.confluxrpc.com/H5hZkXXG9ht8TL6Brp9bUoSH6XTMcV5Tfc15FVmFUZ7ERA6yzEZbCcJCAygd3ZiNdrzyye73E9prRYqRp77vth6iF"
+log_contract_address = "0x748C5f6F60f41A3AC8692127ba77452a3AB6F75D"
+log_sync_start_block_number =	161079660

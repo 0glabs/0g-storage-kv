@@ -1,35 +1,32 @@
+use crate::try_option;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use ethereum_types::{H160, H256};
+use kv_types::{AccessControlSet, KVTransaction, KeyValuePair, StreamWriteSet};
 use shared_types::{
-    AccessControlSet, Chunk, ChunkArray, ChunkArrayWithProof, ChunkWithProof, DataRoot,
-    FlowRangeProof, KeyValuePair, StreamWriteSet, Transaction,
+    Chunk, ChunkArray, ChunkArrayWithProof, ChunkWithProof, DataRoot, FlowProof, FlowRangeProof,
 };
 use std::path::Path;
 use std::sync::Arc;
 use storage::log_store::config::Configurable;
 use storage::log_store::log_manager::LogConfig;
-use storage::log_store::{LogStoreChunkRead, LogStoreChunkWrite, LogStoreRead, LogStoreWrite};
+use storage::log_store::{
+    LogStoreChunkRead, LogStoreChunkWrite, LogStoreRead as _, LogStoreWrite as _,
+};
 use storage::LogManager;
 use tracing::instrument;
 
+use super::metadata_store::MetadataStore;
 use super::stream_store::StreamStore;
-use super::{StreamRead, StreamWrite};
+use super::{LogStoreRead, LogStoreWrite, StreamRead, StreamWrite};
 
 /// 256 Bytes
 pub const ENTRY_SIZE: usize = 256;
 /// 1024 Entries.
 pub const PORA_CHUNK_SIZE: usize = 1024;
 
-pub const COL_TX: u32 = 0;
-pub const COL_ENTRY_BATCH: u32 = 1;
-pub const COL_TX_DATA_ROOT_INDEX: u32 = 2;
-pub const COL_ENTRY_BATCH_ROOT: u32 = 3;
-pub const COL_TX_COMPLETED: u32 = 4;
-pub const COL_MISC: u32 = 5;
-pub const COL_NUM: u32 = 6;
-
 pub struct StoreManager {
+    metadata_store: MetadataStore,
     log_store: LogManager,
     stream_store: StreamStore,
 }
@@ -48,16 +45,19 @@ impl LogStoreChunkWrite for StoreManager {
         tx_seq: u64,
         tx_hash: H256,
         chunks: ChunkArray,
+        maybe_file_proof: Option<FlowProof>,
     ) -> storage::error::Result<bool> {
         self.log_store
-            .put_chunks_with_tx_hash(tx_seq, tx_hash, chunks)
+            .put_chunks_with_tx_hash(tx_seq, tx_hash, chunks, maybe_file_proof)
     }
 }
 
 impl LogStoreWrite for StoreManager {
     #[instrument(skip(self))]
-    fn put_tx(&mut self, tx: Transaction) -> Result<()> {
-        self.log_store.put_tx(tx)
+    fn put_tx(&mut self, tx: KVTransaction) -> Result<()> {
+        self.metadata_store
+            .put_metadata(tx.transaction.seq, tx.metadata)?;
+        self.log_store.put_tx(tx.transaction)
     }
 
     fn finalize_tx(&mut self, tx_seq: u64) -> Result<()> {
@@ -76,8 +76,17 @@ impl LogStoreWrite for StoreManager {
         self.log_store.put_sync_progress(progress)
     }
 
-    fn revert_to(&mut self, tx_seq: u64) -> Result<Vec<Transaction>> {
-        self.log_store.revert_to(tx_seq)
+    fn revert_to(&mut self, tx_seq: u64) -> Result<()> {
+        self.log_store.revert_to(tx_seq)?;
+        Ok(())
+    }
+
+    fn validate_and_insert_range_proof(
+        &mut self,
+        _tx_seq: u64,
+        _data: &ChunkArrayWithProof,
+    ) -> storage::error::Result<bool> {
+        Ok(true)
     }
 }
 
@@ -133,8 +142,11 @@ impl LogStoreChunkRead for StoreManager {
 }
 
 impl LogStoreRead for StoreManager {
-    fn get_tx_by_seq_number(&self, seq: u64) -> crate::error::Result<Option<Transaction>> {
-        self.log_store.get_tx_by_seq_number(seq)
+    fn get_tx_by_seq_number(&self, seq: u64) -> crate::error::Result<Option<KVTransaction>> {
+        Ok(Some(KVTransaction {
+            transaction: try_option!(self.log_store.get_tx_by_seq_number(seq)?),
+            metadata: try_option!(self.metadata_store.get_metadata_by_seq_number(seq)?),
+        }))
     }
 
     fn get_tx_seq_by_data_root(&self, data_root: &DataRoot) -> crate::error::Result<Option<u64>> {
@@ -398,9 +410,10 @@ impl StreamWrite for StoreManager {
         self.stream_store.get_tx_result(tx_seq).await
     }
 
-    async fn revert_stream(&mut self, tx_seq: u64) -> Result<Vec<Transaction>> {
+    async fn revert_stream(&mut self, tx_seq: u64) -> Result<()> {
         self.stream_store.revert_to(tx_seq).await?;
-        self.log_store.revert_to(tx_seq)
+        self.log_store.revert_to(tx_seq)?;
+        Ok(())
     }
 }
 
@@ -409,6 +422,7 @@ impl StoreManager {
         let stream_store = StreamStore::new_in_memory().await?;
         stream_store.create_tables_if_not_exist().await?;
         Ok(Self {
+            metadata_store: MetadataStore::memorydb(),
             log_store: LogManager::memorydb(config)?,
             stream_store,
         })
@@ -422,7 +436,8 @@ impl StoreManager {
         let stream_store = StreamStore::new(kv_db_file.as_ref()).await?;
         stream_store.create_tables_if_not_exist().await?;
         Ok(Self {
-            log_store: LogManager::rocksdb(config, path)?,
+            metadata_store: MetadataStore::rocksdb(path.as_ref().join("metadata"))?,
+            log_store: LogManager::rocksdb(config, path.as_ref().join("log"))?,
             stream_store,
         })
     }
