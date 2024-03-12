@@ -14,7 +14,7 @@ exit-future = "0.2.0"
 futures = "0.3.21"
 log_entry_sync = { path = "./log_entry_sync" }
 rpc = { path = "./rpc" }
-shared_types = { path = "./shared_types" }
+kv_types = { path = "./kv_types" }
 storage_with_stream = { path = "./storage_with_stream" }
 stream = { path = "./stream" }
 task_executor = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }

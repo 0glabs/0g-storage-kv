@@ -2407,12 +2407,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
-name = "hex-literal"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
-
-[[package]]
 name = "hex_fmt"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2519,7 +2513,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite 0.2.13",
- "socket2 0.5.5",
+ "socket2 0.4.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -3036,6 +3030,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0de8b303297635ad57c9f5059fd9cee7a47f8e8daa09df0fcd07dd39fb22977f"
 dependencies = [
  "log",
+]
+
+[[package]]
+name = "kv_types"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "append_merkle",
+ "chrono",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "eth2_ssz_types",
+ "ethereum-types 0.14.1",
+ "merkle_light",
+ "merkle_tree",
+ "serde",
+ "shared_types",
+ "tiny-keccak",
+ "tracing",
+ "typenum",
 ]
 
 [[package]]
@@ -3840,6 +3854,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "jsonrpsee",
+ "kv_types",
  "serde_json",
  "shared_types",
  "storage_with_stream",
@@ -5371,6 +5386,7 @@ dependencies = [
  "futures",
  "futures-channel",
  "jsonrpsee",
+ "kv_types",
  "merkle_light",
  "merkle_tree",
  "serde",
@@ -5813,6 +5829,7 @@ dependencies = [
 [[package]]
 name = "shared_types"
 version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 dependencies = [
  "anyhow",
  "append_merkle",
@@ -5827,6 +5844,7 @@ dependencies = [
  "tiny-keccak",
  "tracing",
  "typenum",
+ "zgs_spec",
 ]
 
 [[package]]
@@ -5997,6 +6015,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "storage"
 version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 dependencies = [
  "anyhow",
  "append_merkle",
@@ -6005,18 +6024,15 @@ dependencies = [
  "eth2_ssz_derive",
  "ethereum-types 0.14.1",
  "hex",
- "hex-literal",
  "itertools 0.10.5",
  "kvdb",
  "kvdb-memorydb",
  "kvdb-rocksdb",
  "merkle_light",
  "merkle_tree",
- "rand 0.8.5",
  "rayon",
  "shared_types",
  "static_assertions",
- "tempdir",
  "tiny-keccak",
  "tracing",
  "typenum",
@@ -6036,6 +6052,7 @@ dependencies = [
  "eth2_ssz_derive",
  "ethereum-types 0.14.1",
  "hex",
+ "kv_types",
  "kvdb",
  "kvdb-memorydb",
  "kvdb-rocksdb",
@@ -6066,6 +6083,7 @@ dependencies = [
  "ethers",
  "futures",
  "jsonrpsee",
+ "kv_types",
  "rpc",
  "rusqlite",
  "serde_json",
@@ -7356,10 +7374,10 @@ dependencies = [
  "exit-future",
  "futures",
  "http",
+ "kv_types",
  "libp2p",
  "log_entry_sync",
  "rpc",
- "shared_types",
  "storage_with_stream",
  "stream",
  "task_executor",

@@ -5,8 +5,7 @@ members = [
     "node/stream",
     "node/log_entry_sync",
     "node/rpc",
-    "node/shared_types",
-    "node/storage",
+    "node/kv_types",
     "node/storage_with_stream",
 ]
 resolver = "2"

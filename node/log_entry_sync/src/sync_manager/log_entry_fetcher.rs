@@ -10,6 +10,7 @@ use ethers::providers::{FilterKind, HttpRateLimitRetryPolicy, RetryClient, Retry
 use ethers::types::H256;
 use futures::StreamExt;
 use jsonrpsee::tracing::{debug, error, info};
+use kv_types::{KVMetadata, KVTransaction};
 use shared_types::{DataRoot, Transaction};
 use std::collections::{BTreeMap, VecDeque};
 use std::str::FromStr;
@@ -334,7 +335,7 @@ impl LogConfirmationQueue {
 #[derive(Debug)]
 pub enum LogFetchProgress {
     SyncedBlock((u64, H256)),
-    Transaction(Transaction),
+    Transaction(KVTransaction),
     Reverted(u64),
 }
 
@@ -352,21 +353,26 @@ fn submission_topic_to_stream_ids(topic: Vec<u8>) -> Vec<H256> {
 }
 
 fn submission_event_to_transaction(e: SubmitFilter) -> LogFetchProgress {
-    LogFetchProgress::Transaction(Transaction {
-        stream_ids: submission_topic_to_stream_ids(e.submission.tags.to_vec()),
-        sender: e.sender,
-        data: vec![],
-        data_merkle_root: nodes_to_root(&e.submission.nodes),
-        merkle_nodes: e
-            .submission
-            .nodes
-            .iter()
-            // the submission height is the height of the root node starting from height 0.
-            .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
-            .collect(),
-        start_entry_index: e.start_pos.as_u64(),
-        size: e.submission.length.as_u64(),
-        seq: e.submission_index.as_u64(),
+    LogFetchProgress::Transaction(KVTransaction {
+        metadata: KVMetadata {
+            stream_ids: submission_topic_to_stream_ids(e.submission.tags.to_vec()),
+            sender: e.sender,
+        },
+        transaction: Transaction {
+            data: vec![],
+            stream_ids: vec![],
+            data_merkle_root: nodes_to_root(&e.submission.nodes),
+            merkle_nodes: e
+                .submission
+                .nodes
+                .iter()
+                // the submission height is the height of the root node starting from height 0.
+                .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
+                .collect(),
+            start_entry_index: e.start_pos.as_u64(),
+            size: e.submission.length.as_u64(),
+            seq: e.submission_index.as_u64(),
+        },
     })
 }
 

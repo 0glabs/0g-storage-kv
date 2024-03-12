@@ -12,7 +12,8 @@ async-trait = "0.1.56"
 ethereum-types = "0.14"
 futures = "0.3.21"
 jsonrpsee = { version = "0.14.0", features = ["full"] }
-shared_types = { path = "../shared_types" }
+kv_types = { path = "../kv_types" }
+shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 task_executor = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 tokio = "1.19.2"
 ethers = { version = "^2", features = ["ws"] }

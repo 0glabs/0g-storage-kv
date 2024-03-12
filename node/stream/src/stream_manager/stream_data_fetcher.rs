@@ -1,9 +1,10 @@
 use crate::StreamConfig;
 use anyhow::{anyhow, bail, Result};
 use jsonrpsee::http_client::HttpClient;
+use kv_types::KVTransaction;
 use rpc::ZgsAdminClient;
 use rpc::ZgsRpcClient;
-use shared_types::{ChunkArray, Transaction};
+use shared_types::ChunkArray;
 use std::{
     cmp,
     collections::{HashMap, VecDeque},
@@ -34,7 +35,7 @@ pub struct StreamDataFetcher {
 async fn download_with_proof(
     clients: Vec<HttpClient>,
     client_index: usize,
-    tx: Arc<Transaction>,
+    tx: Arc<KVTransaction>,
     start_index: usize,
     end_index: usize,
     store: Arc<RwLock<dyn Store>>,
@@ -45,10 +46,13 @@ async fn download_with_proof(
         let index = (client_index + fail_cnt) % clients.len();
         debug!(
             "download_with_proof for tx_seq: {}, start_index: {}, end_index {} from client #{}",
-            tx.seq, start_index, end_index, index
+            tx.transaction.seq, start_index, end_index, index
         );
         match clients[index]
-            .download_segment_with_proof(tx.data_merkle_root, start_index / ENTRIES_PER_SEGMENT)
+            .download_segment_with_proof(
+                tx.transaction.data_merkle_root,
+                start_index / ENTRIES_PER_SEGMENT,
+            )
             .await
         {
             Ok(Some(segment)) => {
@@ -63,7 +67,7 @@ async fn download_with_proof(
                     return;
                 }
 
-                if segment.root != tx.data_merkle_root {
+                if segment.root != tx.transaction.data_merkle_root {
                     debug!("invalid file root");
                     if let Err(e) = sender.send(Err((start_index, end_index, true))) {
                         error!("send error: {:?}", e);
@@ -82,12 +86,13 @@ async fn download_with_proof(
                 }
 
                 if let Err(e) = store.write().await.put_chunks_with_tx_hash(
-                    tx.seq,
-                    tx.hash(),
+                    tx.transaction.seq,
+                    tx.transaction.hash(),
                     ChunkArray {
                         data: segment.data,
                         start_index: (segment.index * ENTRIES_PER_SEGMENT) as u64,
                     },
+                    None,
                 ) {
                     debug!("put segment with error: {:?}", e);
 
@@ -107,7 +112,7 @@ async fn download_with_proof(
             Ok(None) => {
                 debug!(
                     "tx_seq {}, start_index {}, end_index {}, client #{} response is none",
-                    tx.seq, start_index, end_index, index
+                    tx.transaction.seq, start_index, end_index, index
                 );
                 fail_cnt += 1;
                 tokio::time::sleep(Duration::from_millis(RETRY_WAIT_MS)).await;
@@ -115,7 +120,7 @@ async fn download_with_proof(
             Err(e) => {
                 warn!(
                     "tx_seq {}, start_index {}, end_index {}, client #{} response error: {:?}",
-                    tx.seq, start_index, end_index, index, e
+                    tx.transaction.seq, start_index, end_index, index, e
                 );
                 fail_cnt += 1;
                 tokio::time::sleep(Duration::from_millis(RETRY_WAIT_MS)).await;
@@ -169,7 +174,7 @@ impl StreamDataFetcher {
     fn spawn_download_task(
         &self,
         client_index: &mut usize,
-        tx: Arc<Transaction>,
+        tx: Arc<KVTransaction>,
         start_index: usize,
         end_index: usize,
         sender: &UnboundedSender<Result<(), (usize, usize, bool)>>,
@@ -196,14 +201,19 @@ impl StreamDataFetcher {
         *client_index = (*client_index + 1) % self.clients.len();
     }
 
-    async fn sync_data(&self, tx: &Transaction) -> Result<()> {
-        if self.store.read().await.check_tx_completed(tx.seq)? {
+    async fn sync_data(&self, tx: &KVTransaction) -> Result<()> {
+        if self
+            .store
+            .read()
+            .await
+            .check_tx_completed(tx.transaction.seq)?
+        {
             return Ok(());
         }
-        let tx_size_in_entry = if tx.size % ENTRY_SIZE as u64 == 0 {
-            tx.size / ENTRY_SIZE as u64
+        let tx_size_in_entry = if tx.transaction.size % ENTRY_SIZE as u64 == 0 {
+            tx.transaction.size / ENTRY_SIZE as u64
         } else {
-            tx.size / ENTRY_SIZE as u64 + 1
+            tx.transaction.size / ENTRY_SIZE as u64 + 1
         };
 
         let mut pending_entries = VecDeque::new();
@@ -219,7 +229,7 @@ impl StreamDataFetcher {
             );
             debug!(
                 "task_start_index: {:?}, tasks_end_index: {:?}, tx_size_in_entry: {:?}, root: {:?}",
-                i, tasks_end_index, tx_size_in_entry, tx.data_merkle_root
+                i, tasks_end_index, tx_size_in_entry, tx.transaction.data_merkle_root
             );
             for j in (i..tasks_end_index).step_by(ENTRIES_PER_SEGMENT) {
                 let task_end_index = cmp::min(tasks_end_index, j + ENTRIES_PER_SEGMENT as u64);
@@ -258,7 +268,7 @@ impl StreamDataFetcher {
                         }
                     }
                     Err((start_index, end_index, data_err)) => {
-                        warn!("Download data of tx_seq {:?}, start_index {:?}, end_index {:?}, failed",tx.seq, start_index, end_index);
+                        warn!("Download data of tx_seq {:?}, start_index {:?}, end_index {:?}, failed",tx.transaction.seq, start_index, end_index);
 
                         match failed_tasks.get_mut(&start_index) {
                             Some(c) => {
@@ -275,12 +285,12 @@ impl StreamDataFetcher {
                             }
                         }
 
-                        match self.request_file(tx.seq).await {
+                        match self.request_file(tx.transaction.seq).await {
                             Ok(_) => {}
                             Err(e) => {
                                 warn!(
                                     "Failed to request file with tx seq {:?}, error: {}",
-                                    tx.seq, e
+                                    tx.transaction.seq, e
                                 );
                             }
                         }
@@ -300,7 +310,7 @@ impl StreamDataFetcher {
         self.store
             .write()
             .await
-            .finalize_tx_with_hash(tx.seq, tx.hash())?;
+            .finalize_tx_with_hash(tx.transaction.seq, tx.transaction.hash())?;
         Ok(())
     }
 
@@ -351,10 +361,10 @@ impl StreamDataFetcher {
             match maybe_tx {
                 Ok(Some(tx)) => {
                     let mut skip = false;
-                    if tx.stream_ids.is_empty() {
+                    if tx.metadata.stream_ids.is_empty() {
                         skip = true;
                     } else {
-                        for id in tx.stream_ids.iter() {
+                        for id in tx.metadata.stream_ids.iter() {
                             if !self.config.stream_set.contains(id) {
                                 skip = true;
                                 break;
@@ -363,10 +373,16 @@ impl StreamDataFetcher {
                     }
                     // sync data
                     if !skip {
-                        info!("syncing data of tx with sequence number {:?}..", tx.seq);
+                        info!(
+                            "syncing data of tx with sequence number {:?}..",
+                            tx.transaction.seq
+                        );
                         match self.sync_data(&tx).await {
                             Ok(()) => {
-                                info!("data of tx with sequence number {:?} synced.", tx.seq);
+                                info!(
+                                    "data of tx with sequence number {:?} synced.",
+                                    tx.transaction.seq
+                                );
                             }
                             Err(e) => {
                                 error!("stream data sync error: e={:?}", e);
@@ -375,7 +391,7 @@ impl StreamDataFetcher {
                             }
                         }
                     } else {
-                        info!("tx {:?} is not in stream, skipped.", tx.seq);
+                        info!("tx {:?} is not in stream, skipped.", tx.transaction.seq);
                     }
                     // update progress, get next tx_seq to sync
                     match self

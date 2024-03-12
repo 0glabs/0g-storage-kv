@@ -1,11 +1,12 @@
 [package]
-name = "shared_types"
+name = "kv_types"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 anyhow = { version = "=1.0.58", features = ["backtrace"] }
 ethereum-types = "0.14"
 eth2_ssz = "0.4.0"

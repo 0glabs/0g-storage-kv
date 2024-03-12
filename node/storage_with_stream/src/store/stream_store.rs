@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use ethereum_types::{H160, H256};
-use shared_types::{AccessControlSet, KeyValuePair, StreamWriteSet};
+use kv_types::{AccessControlSet, KeyValuePair, StreamWriteSet};
 use ssz::{Decode, Encode};
 use std::{path::Path, sync::Arc};
 

@@ -5,6 +5,7 @@ use anyhow::{bail, Result};
 use ethers::prelude::Middleware;
 use futures::FutureExt;
 use jsonrpsee::tracing::{debug, error, trace, warn};
+use kv_types::KVTransaction;
 use shared_types::{ChunkArray, Transaction};
 use std::fmt::Debug;
 use std::future::Future;
@@ -150,9 +151,9 @@ impl LogSyncManager {
         Ok(event_send_cloned)
     }
 
-    async fn put_tx(&mut self, tx: Transaction) -> bool {
+    async fn put_tx(&mut self, tx: KVTransaction) -> bool {
         // We call this after process chain reorg, so the sequence number should match.
-        match tx.seq.cmp(&self.next_tx_seq) {
+        match tx.transaction.seq.cmp(&self.next_tx_seq) {
             std::cmp::Ordering::Less => true,
             std::cmp::Ordering::Equal => {
                 debug!("log entry sync get entry: {:?}", tx);
@@ -161,7 +162,7 @@ impl LogSyncManager {
             std::cmp::Ordering::Greater => {
                 error!(
                     "Unexpected transaction seq: next={} get={}",
-                    self.next_tx_seq, tx.seq
+                    self.next_tx_seq, tx.transaction.seq
                 );
                 false
             }
@@ -177,13 +178,16 @@ impl LogSyncManager {
                 if matches!(store.check_tx_completed(seq), Ok(true)) {
                     if let Ok(Some(tx)) = store.get_tx_by_seq_number(seq) {
                         // TODO(zz): Skip reading the rear padding data?
-                        if let Ok(Some(data)) =
-                            store.get_chunks_by_tx_and_index_range(seq, 0, tx.num_entries())
-                        {
-                            if !self
-                                .data_cache
-                                .add_data(tx.data_merkle_root, seq, data.data)
-                            {
+                        if let Ok(Some(data)) = store.get_chunks_by_tx_and_index_range(
+                            seq,
+                            0,
+                            tx.transaction.num_entries(),
+                        ) {
+                            if !self.data_cache.add_data(
+                                tx.transaction.data_merkle_root,
+                                seq,
+                                data.data,
+                            ) {
                                 // TODO(zz): Data too large. Save to disk?
                                 warn!("large reverted data dropped for tx={:?}", tx);
                             }
@@ -254,25 +258,28 @@ impl LogSyncManager {
         Ok(())
     }
 
-    async fn put_tx_inner(&mut self, tx: Transaction) -> bool {
+    async fn put_tx_inner(&mut self, tx: KVTransaction) -> bool {
         if let Err(e) = self.store.write().await.put_tx(tx.clone()) {
             error!("put_tx error: e={:?}", e);
             false
         } else {
-            if let Some(data) = self.data_cache.pop_data(&tx.data_merkle_root) {
+            if let Some(data) = self.data_cache.pop_data(&tx.transaction.data_merkle_root) {
                 let mut store = self.store.write().await;
                 // We are holding a mutable reference of LogSyncManager, so no chain reorg is
                 // possible after put_tx.
                 if let Err(e) = store
                     .put_chunks_with_tx_hash(
-                        tx.seq,
-                        tx.hash(),
+                        tx.transaction.seq,
+                        tx.transaction.hash(),
                         ChunkArray {
                             data,
                             start_index: 0,
                         },
+                        None,
                     )
-                    .and_then(|_| store.finalize_tx_with_hash(tx.seq, tx.hash()))
+                    .and_then(|_| {
+                        store.finalize_tx_with_hash(tx.transaction.seq, tx.transaction.hash())
+                    })
                 {
                     error!("put_tx data error: e={:?}", e);
                     return false;

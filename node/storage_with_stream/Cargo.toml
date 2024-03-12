@@ -15,9 +15,10 @@ kvdb-memorydb = "0.13.0"
 kvdb-rocksdb = "0.19.0"
 merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
-storage = { path = "../storage" }
+storage = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 rayon = "1.5.3"
-shared_types = { path = "../shared_types" }
+shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+kv_types = { path = "../kv_types" }
 tracing = "0.1.35"
 typenum = "1.15.0"
 rusqlite = { version = "0.28.0", features = ["bundled"] }
