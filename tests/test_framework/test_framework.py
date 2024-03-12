@@ -59,14 +59,14 @@ class TestFramework:
             tests_dir, "tmp", "geth" + binary_ext
         )
         self.__default_zgs_node_binary__ = os.path.join(
-            root_dir, "zerog-storage-rust", "target", "release", "zgs_node" + binary_ext
+            root_dir, "0g-storage-node", "target", "release", "zgs_node" + binary_ext
         )
         self.__default_zgs_cli_binary__ = os.path.join(
             __file_path__,
             root_dir,
-            "zerog-storage-rust",
+            "0g-storage-node",
             "target",
-            "zerog-storage-client" + binary_ext,
+            "0g-storage-client" + binary_ext,
         )
         self.__default_zgs_kv_binary__ = os.path.join(
             __file_path__, root_dir, "target", "release", "zgs_kv" + binary_ext
@@ -232,7 +232,7 @@ class TestFramework:
             dest="contract",
             default=os.path.join(
                 __file_path__,
-                "../../zerog-storage-rust/zerog-storage-contracts/artifacts/contracts/dataFlow/Flow.sol/Flow.json",
+                "../../0g-storage-node/0g-storage-contracts/artifacts/contracts/dataFlow/Flow.sol/Flow.json",
             ),
             type=str,
         )
@@ -252,7 +252,7 @@ class TestFramework:
             dest="mine_contract",
             default=os.path.join(
                 __file_path__,
-                "../../zerog-storage-rust/zerog-storage-contracts/artifacts/contracts/test/PoraMineTest.sol/PoraMineTest.json",
+                "../../0g-storage-rust/0g-storage-contracts/artifacts/contracts/test/PoraMineTest.sol/PoraMineTest.json",
             ),
             type=str,
         )

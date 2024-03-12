@@ -17,4 +17,3 @@ tests/**/__pycache__
 tests/utility/geth
 tests/utility/conflux
 tests/tmp/**
-zerog-storage-rust-backup

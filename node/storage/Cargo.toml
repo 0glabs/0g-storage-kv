@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "=1.0.58", features = ["backtrace"] }
-append_merkle = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
-zgs_spec = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
-zgs_seal = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
+append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+zgs_spec = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+zgs_seal = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 eth2_ssz = "0.4.0"
 eth2_ssz_derive = "0.3.0"
 ethereum-types = "0.14"
@@ -16,8 +16,8 @@ kvdb = "0.13.0"
 kvdb-memorydb = "0.13.0"
 kvdb-rocksdb = "0.19.0"
 #merkle_light = {git = "https://github.com/sitano/merkle_light.git", rev = "fe31d4e" }
-merkle_light = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
-merkle_tree = { git = "https://github.com/zero-gravity-labs/zerog-storage-rust.git", branch = "main" }
+merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 rayon = "1.5.3"
 shared_types = { path = "../shared_types" }
 tracing = "0.1.35"
