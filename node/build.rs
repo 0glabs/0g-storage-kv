@@ -1,13 +1,13 @@
 use std::process::Command;
 
 fn main() {
-    println!("cargo:rerun-if-changed=../zerog-storage-rust");
+    println!("cargo:rerun-if-changed=../0g-storage-node");
 
     let status = Command::new("cargo")
-        .current_dir("../zerog-storage-rust")
+        .current_dir("../0g-storage-node")
         .args(vec!["build", "--release"])
         .status()
         .unwrap();
 
-    println!("build zerog-storage-rust with status {}", status);
+    println!("build 0g-storage-node with status {}", status);
 }

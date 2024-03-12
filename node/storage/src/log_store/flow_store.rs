@@ -444,6 +444,7 @@ impl FlowDBStore {
         Ok(MerkleTreeInitialData {
             subtree_list: root_list,
             known_leaves: leaf_list,
+            extra_mpt_nodes: vec![],
         })
     }
 
