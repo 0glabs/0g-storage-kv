@@ -252,7 +252,7 @@ class TestFramework:
             dest="mine_contract",
             default=os.path.join(
                 __file_path__,
-                "../../0g-storage-rust/0g-storage-contracts/artifacts/contracts/test/PoraMineTest.sol/PoraMineTest.json",
+                "../../0g-storage-node/0g-storage-contracts/artifacts/contracts/test/PoraMineTest.sol/PoraMineTest.json",
             ),
             type=str,
         )
