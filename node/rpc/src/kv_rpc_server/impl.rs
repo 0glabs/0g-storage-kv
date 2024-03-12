@@ -49,7 +49,7 @@ impl KeyValueRpcServerImpl {
                 version: pair.version,
                 data: entry_array.data[(start_byte_index as usize
                     - start_entry_index as usize * ENTRY_SIZE)
-                    ..(end_byte_index as usize - start_entry_index as usize * ENTRY_SIZE) as usize]
+                    ..(end_byte_index as usize - start_entry_index as usize * ENTRY_SIZE)]
                     .to_vec(),
                 size: pair.end_index - pair.start_index,
             }));
@@ -89,7 +89,7 @@ impl KeyValueRpcServerImpl {
                 key: pair.key,
                 data: entry_array.data[(start_byte_index as usize
                     - start_entry_index as usize * ENTRY_SIZE)
-                    ..(end_byte_index as usize - start_entry_index as usize * ENTRY_SIZE) as usize]
+                    ..(end_byte_index as usize - start_entry_index as usize * ENTRY_SIZE)]
                     .to_vec(),
                 size: pair.end_index - pair.start_index,
             }));

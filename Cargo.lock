@@ -127,13 +127,14 @@ dependencies = [
 [[package]]
 name = "append_merkle"
 version = "0.1.0"
-source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#c2b8b1cab3dac146bfd64694f6fbbe33ad6e86c0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 dependencies = [
  "anyhow",
  "eth2_ssz",
  "eth2_ssz_derive",
  "ethereum-types 0.14.1",
  "lazy_static",
+ "once_cell",
  "serde",
  "tiny-keccak",
  "tracing",
@@ -945,7 +946,7 @@ checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 [[package]]
 name = "contract-interface"
 version = "0.1.0"
-source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#c2b8b1cab3dac146bfd64694f6fbbe33ad6e86c0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 dependencies = [
  "ethers",
  "serde_json",
@@ -3782,7 +3783,7 @@ dependencies = [
 [[package]]
 name = "lighthouse_metrics"
 version = "0.2.0"
-source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#c2b8b1cab3dac146bfd64694f6fbbe33ad6e86c0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 dependencies = [
  "lazy_static",
  "prometheus",
@@ -3905,7 +3906,7 @@ checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
 [[package]]
 name = "merkle_light"
 version = "0.4.0"
-source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#c2b8b1cab3dac146bfd64694f6fbbe33ad6e86c0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 dependencies = [
  "rayon",
 ]
@@ -3913,7 +3914,7 @@ dependencies = [
 [[package]]
 name = "merkle_tree"
 version = "0.1.0"
-source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#c2b8b1cab3dac146bfd64694f6fbbe33ad6e86c0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 dependencies = [
  "merkle_light",
  "tiny-keccak",
@@ -6207,7 +6208,7 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 [[package]]
 name = "task_executor"
 version = "0.1.0"
-source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#c2b8b1cab3dac146bfd64694f6fbbe33ad6e86c0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 dependencies = [
  "exit-future",
  "futures",
@@ -7372,7 +7373,7 @@ dependencies = [
 [[package]]
 name = "zgs_seal"
 version = "0.1.0"
-source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#c2b8b1cab3dac146bfd64694f6fbbe33ad6e86c0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 dependencies = [
  "ethereum-types 0.14.1",
  "tiny-keccak",
@@ -7382,7 +7383,7 @@ dependencies = [
 [[package]]
 name = "zgs_spec"
 version = "0.1.0"
-source = "git+https://github.com/zero-gravity-labs/zerog-storage-rust.git?branch=main#c2b8b1cab3dac146bfd64694f6fbbe33ad6e86c0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#c276faf1fde2a12df7ca54779cb672e553bac9eb"
 
 [[package]]
 name = "zip"
