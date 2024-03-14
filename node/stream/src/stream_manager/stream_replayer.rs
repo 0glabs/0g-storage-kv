@@ -467,16 +467,38 @@ impl StreamReplayer {
                         )));
                     }
                 }
-                AccessControlOps::GRANT_WRITER_ROLE
-                | AccessControlOps::GRANT_SPECIAL_WRITER_ROLE => {
-                    if !store_read
-                        .has_write_permission(
-                            tx.metadata.sender,
+                AccessControlOps::GRANT_WRITER_ROLE => {
+                    if !access_control_set
+                        .is_admin
+                        .contains(&access_control.stream_id)
+                        && !store_read
+                            .is_writer_of_stream(
+                                tx.metadata.sender,
+                                access_control.stream_id,
+                                tx.transaction.seq,
+                            )
+                            .await?
+                    {
+                        return Ok(Some(ReplayResult::AccessControlPermissionDenied(
+                            access_control.op_type,
                             access_control.stream_id,
                             access_control.key.clone(),
-                            tx.transaction.seq,
-                        )
-                        .await?
+                            access_control.account,
+                        )));
+                    }
+                }
+                AccessControlOps::GRANT_SPECIAL_WRITER_ROLE => {
+                    if !access_control_set
+                        .is_admin
+                        .contains(&access_control.stream_id)
+                        && !store_read
+                            .is_writer_of_key(
+                                tx.metadata.sender,
+                                access_control.stream_id,
+                                access_control.key.clone(),
+                                tx.transaction.seq,
+                            )
+                            .await?
                     {
                         return Ok(Some(ReplayResult::AccessControlPermissionDenied(
                             access_control.op_type,
