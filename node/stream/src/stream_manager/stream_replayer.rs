@@ -442,6 +442,7 @@ impl StreamReplayer {
         tx: &KVTransaction,
     ) -> Result<Option<ReplayResult>> {
         // validate
+        let store_read = self.store.read().await;
         let stream_set = HashSet::<H256>::from_iter(tx.metadata.stream_ids.iter().cloned());
         for access_control in &access_control_set.access_controls {
             if !stream_set.contains(&access_control.stream_id) {
@@ -452,13 +453,30 @@ impl StreamReplayer {
                 AccessControlOps::GRANT_ADMIN_ROLE
                 | AccessControlOps::SET_KEY_TO_NORMAL
                 | AccessControlOps::SET_KEY_TO_SPECIAL
-                | AccessControlOps::GRANT_WRITER_ROLE
                 | AccessControlOps::REVOKE_WRITER_ROLE
-                | AccessControlOps::GRANT_SPECIAL_WRITER_ROLE
                 | AccessControlOps::REVOKE_SPECIAL_WRITER_ROLE => {
                     if !access_control_set
                         .is_admin
                         .contains(&access_control.stream_id)
+                    {
+                        return Ok(Some(ReplayResult::AccessControlPermissionDenied(
+                            access_control.op_type,
+                            access_control.stream_id,
+                            access_control.key.clone(),
+                            access_control.account,
+                        )));
+                    }
+                }
+                AccessControlOps::GRANT_WRITER_ROLE
+                | AccessControlOps::GRANT_SPECIAL_WRITER_ROLE => {
+                    if !store_read
+                        .has_write_permission(
+                            tx.metadata.sender,
+                            access_control.stream_id,
+                            access_control.key.clone(),
+                            tx.transaction.seq,
+                        )
+                        .await?
                     {
                         return Ok(Some(ReplayResult::AccessControlPermissionDenied(
                             access_control.op_type,
