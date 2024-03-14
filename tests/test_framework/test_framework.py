@@ -87,8 +87,6 @@ class TestFramework:
                     self.blockchain_binary,
                     updated_config,
                     self.contract_path,
-                    self.token_contract_path,
-                    self.mine_contract_path,
                     self.log,
                     60,
                 )
@@ -99,8 +97,6 @@ class TestFramework:
                     self.blockchain_binary,
                     updated_config,
                     self.contract_path,
-                    self.token_contract_path,
-                    self.mine_contract_path,
                     self.log,
                 )
             else:
@@ -232,27 +228,7 @@ class TestFramework:
             dest="contract",
             default=os.path.join(
                 __file_path__,
-                "../../0g-storage-node/0g-storage-contracts/artifacts/contracts/dataFlow/Flow.sol/Flow.json",
-            ),
-            type=str,
-        )
-
-        parser.add_argument(
-            "--token-contract-path",
-            dest="token_contract",
-            default=os.path.join(
-                __file_path__,
-                "../config/MockToken.json",
-            ),
-            type=str,
-        )
-
-        parser.add_argument(
-            "--mine-contract-path",
-            dest="mine_contract",
-            default=os.path.join(
-                __file_path__,
-                "../../0g-storage-node/0g-storage-contracts/artifacts/contracts/test/PoraMineTest.sol/PoraMineTest.json",
+                "../../0g-storage-node/0g-storage-contracts/",
             ),
             type=str,
         )
@@ -446,17 +422,9 @@ class TestFramework:
         self.cli_binary = self.options.cli
         self.kv_binary = self.options.zgs_kv
         self.contract_path = self.options.contract
-        self.token_contract_path = self.options.token_contract
-        self.mine_contract_path = self.options.mine_contract
 
         assert os.path.exists(self.contract_path), (
             "%s should be exist" % self.contract_path
-        )
-        assert os.path.exists(self.token_contract_path), (
-            "%s should be exist" % self.token_contract_path
-        )
-        assert os.path.exists(self.mine_contract_path), (
-            "%s should be exist" % self.mine_contract_path
         )
 
         if self.options.random_seed is not None:
