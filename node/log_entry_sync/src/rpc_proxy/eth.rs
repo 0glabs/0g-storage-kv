@@ -1,6 +1,7 @@
 use crate::rpc_proxy::{ContractAddress, EvmRpcProxy, SubEvent, SubFilter};
 use async_trait::async_trait;
-use ethers::prelude::{Bytes, Middleware, Provider, Ws};
+use ethers::prelude::{Bytes, Middleware, Provider};
+use ethers::providers::Ws;
 use ethers::types::TransactionRequest;
 use jsonrpsee::core::client::Subscription;
 

@@ -8,6 +8,7 @@ use shared_types::ChunkWithProof;
 use shared_types::DataRoot;
 use shared_types::FlowRangeProof;
 use storage::log_store::config::Configurable;
+use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
 use storage::log_store::LogStoreChunkRead;
 use storage::log_store::LogStoreChunkWrite;
 
@@ -54,6 +55,10 @@ pub trait LogStoreRead: LogStoreChunkRead {
 
     fn get_sync_progress(&self) -> Result<Option<(u64, H256)>>;
 
+    fn get_block_hash_by_number(&self, block_number: u64) -> Result<Option<(H256, Option<u64>)>>;
+
+    fn get_block_hashes(&self) -> Result<Vec<(u64, BlockHashAndSubmissionIndex)>>;
+
     fn validate_range_proof(&self, tx_seq: u64, data: &ChunkArrayWithProof) -> Result<bool>;
 
     fn get_proof_at_root(&self, root: &DataRoot, index: u64, length: u64)
@@ -77,7 +82,7 @@ pub trait LogStoreWrite: LogStoreChunkWrite {
     fn finalize_tx_with_hash(&mut self, tx_seq: u64, tx_hash: H256) -> Result<bool>;
 
     /// Store the progress of synced block number and its hash.
-    fn put_sync_progress(&self, progress: (u64, H256)) -> Result<()>;
+    fn put_sync_progress(&self, progress: (u64, H256, Option<Option<u64>>)) -> Result<()>;
 
     /// Revert the log state to a given tx seq.
     /// This is needed when transactions are reverted because of chain reorg.
@@ -91,6 +96,8 @@ pub trait LogStoreWrite: LogStoreChunkWrite {
         tx_seq: u64,
         data: &ChunkArrayWithProof,
     ) -> Result<bool>;
+
+    fn delete_block_hash_by_number(&self, block_number: u64) -> Result<()>;
 }
 
 pub trait Store:
