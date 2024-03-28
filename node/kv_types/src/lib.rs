@@ -7,6 +7,26 @@ use std::collections::HashSet;
 
 use std::sync::Arc;
 
+// SHA256("STREAM")
+// df2ff3bb0af36c6384e6206552a4ed807f6f6a26e7d0aa6bff772ddc9d4307aa
+pub const STREAM_DOMAIN: H256 = H256([
+    223, 47, 243, 187, 10, 243, 108, 99, 132, 230, 32, 101, 82, 164, 237, 128, 127, 111, 106, 38,
+    231, 208, 170, 107, 255, 119, 45, 220, 157, 67, 7, 170,
+]);
+
+pub fn submission_topic_to_stream_ids(topic: Vec<u8>) -> Vec<H256> {
+    if topic.is_empty() || topic.len() % 32 != 0 || H256::from_slice(&topic[..32]) != STREAM_DOMAIN
+    {
+        return vec![];
+    }
+
+    let mut stream_ids = Vec::new();
+    for i in (32..topic.len()).step_by(32) {
+        stream_ids.push(H256::from_slice(&topic[i..i + 32]))
+    }
+    stream_ids
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, DeriveDecode, DeriveEncode, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct KVMetadata {

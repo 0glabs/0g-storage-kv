@@ -10,6 +10,7 @@ use std::path::Path;
 use std::sync::Arc;
 use storage::log_store::config::Configurable;
 use storage::log_store::log_manager::LogConfig;
+use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
 use storage::log_store::{
     LogStoreChunkRead, LogStoreChunkWrite, LogStoreRead as _, LogStoreWrite as _,
 };
@@ -72,7 +73,7 @@ impl LogStoreWrite for StoreManager {
         self.log_store.finalize_tx_with_hash(tx_seq, tx_hash)
     }
 
-    fn put_sync_progress(&self, progress: (u64, H256)) -> Result<()> {
+    fn put_sync_progress(&self, progress: (u64, H256, Option<Option<u64>>)) -> Result<()> {
         self.log_store.put_sync_progress(progress)
     }
 
@@ -87,6 +88,10 @@ impl LogStoreWrite for StoreManager {
         _data: &ChunkArrayWithProof,
     ) -> storage::error::Result<bool> {
         Ok(true)
+    }
+
+    fn delete_block_hash_by_number(&self, block_number: u64) -> Result<()> {
+        self.log_store.delete_block_hash_by_number(block_number)
     }
 }
 
@@ -182,6 +187,14 @@ impl LogStoreRead for StoreManager {
 
     fn get_sync_progress(&self) -> Result<Option<(u64, H256)>> {
         self.log_store.get_sync_progress()
+    }
+
+    fn get_block_hash_by_number(&self, block_number: u64) -> Result<Option<(H256, Option<u64>)>> {
+        self.log_store.get_block_hash_by_number(block_number)
+    }
+
+    fn get_block_hashes(&self) -> Result<Vec<(u64, BlockHashAndSubmissionIndex)>> {
+        self.log_store.get_block_hashes()
     }
 
     fn next_tx_seq(&self) -> u64 {
