@@ -12,3 +12,5 @@ resolver = "2"
 
 [patch.crates-io]
 eth2_ssz = { path = "version-meld/eth2_ssz" }
+enr = { path = "version-meld/enr" }
+discv5 = { path = "version-meld/discv5" }
