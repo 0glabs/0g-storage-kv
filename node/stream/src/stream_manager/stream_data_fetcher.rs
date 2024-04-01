@@ -2,8 +2,6 @@ use crate::StreamConfig;
 use anyhow::{anyhow, bail, Result};
 use jsonrpsee::http_client::HttpClient;
 use kv_types::KVTransaction;
-use rpc::ZgsAdminClient;
-use rpc::ZgsRpcClient;
 use shared_types::ChunkArray;
 use std::{
     cmp,
@@ -11,6 +9,8 @@ use std::{
     sync::Arc,
     time::Duration,
 };
+use zgs_rpc::ZgsAdminRpcClient;
+use zgs_rpc::ZgsRPCClient;
 
 use storage_with_stream::{log_store::log_manager::ENTRY_SIZE, Store};
 use task_executor::TaskExecutor;

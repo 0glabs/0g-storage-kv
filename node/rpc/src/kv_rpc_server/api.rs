@@ -1,8 +1,9 @@
 use ethereum_types::{H160, H256};
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
+use zgs_rpc::types::Segment;
 
-use crate::types::{KeyValueSegment, Segment, ValueSegment};
+use crate::types::{KeyValueSegment, ValueSegment};
 
 #[rpc(server, client, namespace = "kv")]
 pub trait KeyValueRpc {

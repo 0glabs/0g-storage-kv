@@ -163,6 +163,22 @@ dependencies = [
 [[package]]
 name = "append_merkle"
 version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "anyhow",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "ethereum-types 0.14.1",
+ "lazy_static",
+ "once_cell",
+ "serde",
+ "tiny-keccak",
+ "tracing",
+]
+
+[[package]]
+name = "append_merkle"
+version = "0.1.0"
 source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
 dependencies = [
  "anyhow",
@@ -830,7 +846,7 @@ dependencies = [
 [[package]]
 name = "channel"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "tokio",
 ]
@@ -852,14 +868,14 @@ dependencies = [
 [[package]]
 name = "chunk_pool"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "anyhow",
  "async-lock 2.8.0",
  "hashlink 0.8.4",
- "log_entry_sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "log_entry_sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "network",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "storage-async",
  "tokio",
  "tracing",
@@ -1035,6 +1051,15 @@ name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
+
+[[package]]
+name = "contract-interface"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "ethers",
+ "serde_json",
+]
 
 [[package]]
 name = "contract-interface"
@@ -1366,7 +1391,7 @@ dependencies = [
 [[package]]
 name = "directory"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 
 [[package]]
 name = "dirs"
@@ -2220,14 +2245,14 @@ checksum = "c007b1ae3abe1cb6f85a16305acd418b7ca6343b953633fee2b76d8f108b830f"
 [[package]]
 name = "file_location_cache"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "hashlink 0.8.4",
  "network",
  "parking_lot 0.12.1",
  "priority-queue",
  "rand 0.8.5",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "tracing",
 ]
 
@@ -2715,7 +2740,7 @@ dependencies = [
 [[package]]
 name = "hashset_delay"
 version = "0.2.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "futures",
  "tokio-util 0.6.10",
@@ -3421,16 +3446,16 @@ name = "kv_types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "chrono",
  "eth2_ssz",
  "eth2_ssz_derive",
  "eth2_ssz_types",
  "ethereum-types 0.14.1",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "serde",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tiny-keccak",
  "tracing",
  "typenum",
@@ -4217,6 +4242,15 @@ dependencies = [
 [[package]]
 name = "lighthouse_metrics"
 version = "0.2.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "lazy_static",
+ "prometheus",
+]
+
+[[package]]
+name = "lighthouse_metrics"
+version = "0.2.0"
 source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
 dependencies = [
  "lazy_static",
@@ -4265,9 +4299,9 @@ name = "log_entry_sync"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "async-trait",
- "contract-interface",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "ethereum-types 0.14.1",
  "ethers",
  "futures",
@@ -4276,10 +4310,10 @@ dependencies = [
  "jsonrpsee",
  "kv_types",
  "serde_json",
- "shared_types",
- "storage",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "storage_with_stream",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "thiserror",
  "tokio",
 ]
@@ -4287,12 +4321,12 @@ dependencies = [
 [[package]]
 name = "log_entry_sync"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "async-trait",
- "contract-interface",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "ethereum-types 0.14.1",
  "ethers",
  "futures",
@@ -4300,9 +4334,9 @@ dependencies = [
  "futures-util",
  "jsonrpsee",
  "serde_json",
- "shared_types",
- "storage",
- "task_executor",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "thiserror",
  "tokio",
 ]
@@ -4365,6 +4399,14 @@ checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
 [[package]]
 name = "merkle_light"
 version = "0.4.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "rayon",
+]
+
+[[package]]
+name = "merkle_light"
+version = "0.4.0"
 source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
 dependencies = [
  "rayon",
@@ -4373,9 +4415,18 @@ dependencies = [
 [[package]]
 name = "merkle_tree"
 version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "merkle_tree"
+version = "0.1.0"
 source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
 dependencies = [
- "merkle_light",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tiny-keccak",
 ]
 
@@ -4388,24 +4439,24 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 [[package]]
 name = "miner"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "async-trait",
  "blake2",
- "contract-interface",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "ethereum-types 0.14.1",
  "ethers",
  "lazy_static",
  "network",
  "rand 0.8.5",
- "shared_types",
- "storage",
- "task_executor",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "tiny-keccak",
  "tokio",
  "tracing",
- "zgs_seal",
- "zgs_spec",
+ "zgs_seal 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
 ]
 
 [[package]]
@@ -4627,7 +4678,7 @@ dependencies = [
 [[package]]
 name = "network"
 version = "0.2.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "directory",
  "dirs 4.0.0",
@@ -4645,7 +4696,7 @@ dependencies = [
  "igd",
  "lazy_static",
  "libp2p",
- "lighthouse_metrics",
+ "lighthouse_metrics 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "lru",
  "parking_lot 0.12.1",
  "prometheus-client",
@@ -4654,12 +4705,12 @@ dependencies = [
  "serde",
  "serde_derive",
  "sha2 0.10.8",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "slog",
  "smallvec",
  "snap",
  "strum 0.24.1",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "tiny-keccak",
  "tokio",
  "tokio-io-timeout",
@@ -5997,21 +6048,21 @@ dependencies = [
 name = "rpc"
 version = "0.1.0"
 dependencies = [
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "base64 0.13.1",
  "ethereum-types 0.14.1",
  "futures",
  "futures-channel",
  "jsonrpsee",
  "kv_types",
- "merkle_light",
- "merkle_tree",
- "rpc 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "rpc 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "serde",
  "serde_json",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "storage_with_stream",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tokio",
  "tracing",
 ]
@@ -6019,24 +6070,24 @@ dependencies = [
 [[package]]
 name = "rpc"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "base64 0.13.1",
  "chunk_pool",
  "futures",
  "futures-channel",
  "jsonrpsee",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "miner",
  "network",
  "serde",
- "shared_types",
- "storage",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "storage-async",
  "sync",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "tokio",
  "tracing",
 ]
@@ -6496,22 +6547,43 @@ dependencies = [
 [[package]]
 name = "shared_types"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "chrono",
  "eth2_ssz",
  "eth2_ssz_derive",
  "eth2_ssz_types",
  "ethereum-types 0.14.1",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "serde",
  "tiny-keccak",
  "tracing",
  "typenum",
- "zgs_spec",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+]
+
+[[package]]
+name = "shared_types"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+dependencies = [
+ "anyhow",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "chrono",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "eth2_ssz_types",
+ "ethereum-types 0.14.1",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "serde",
+ "tiny-keccak",
+ "tracing",
+ "typenum",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
 ]
 
 [[package]]
@@ -6708,10 +6780,10 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "storage"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "bitmaps",
  "eth2_ssz",
  "eth2_ssz_derive",
@@ -6721,27 +6793,55 @@ dependencies = [
  "kvdb",
  "kvdb-memorydb",
  "kvdb-rocksdb",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "rayon",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "static_assertions",
  "tiny-keccak",
  "tracing",
  "typenum",
- "zgs_seal",
- "zgs_spec",
+ "zgs_seal 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+]
+
+[[package]]
+name = "storage"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+dependencies = [
+ "anyhow",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "bitmaps",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "ethereum-types 0.14.1",
+ "hex",
+ "itertools 0.10.5",
+ "kvdb",
+ "kvdb-memorydb",
+ "kvdb-rocksdb",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "rayon",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "static_assertions",
+ "tiny-keccak",
+ "tracing",
+ "typenum",
+ "zgs_seal 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
 ]
 
 [[package]]
 name = "storage-async"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "anyhow",
- "shared_types",
- "storage",
- "task_executor",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "tokio",
  "tracing",
 ]
@@ -6751,7 +6851,7 @@ name = "storage_with_stream"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "async-trait",
  "const_format",
  "eth2_ssz",
@@ -6762,13 +6862,13 @@ dependencies = [
  "kvdb",
  "kvdb-memorydb",
  "kvdb-rocksdb",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "rand 0.8.5",
  "rayon",
  "rusqlite",
- "shared_types",
- "storage",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tempdir",
  "tokio-rusqlite",
  "tracing",
@@ -6780,9 +6880,9 @@ name = "stream"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "async-trait",
- "contract-interface",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "eth2_ssz",
  "eth2_ssz_derive",
  "ethereum-types 0.14.1",
@@ -6791,11 +6891,12 @@ dependencies = [
  "jsonrpsee",
  "kv_types",
  "rpc 0.1.0",
+ "rpc 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "rusqlite",
  "serde_json",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "storage_with_stream",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "thiserror",
  "tokio",
  "tracing",
@@ -6915,23 +7016,23 @@ dependencies = [
 [[package]]
 name = "sync"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "channel",
  "duration-str",
  "eth2_ssz",
  "file_location_cache",
  "libp2p",
- "log_entry_sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "log_entry_sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "network",
  "rand 0.8.5",
  "serde",
- "shared_types",
- "storage",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "storage-async",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "tokio",
  "tracing",
 ]
@@ -6990,12 +7091,25 @@ checksum = "c63f48baada5c52e65a29eef93ab4f8982681b67f9e8d29c7b05abcfec2b9ffe"
 [[package]]
 name = "task_executor"
 version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "exit-future",
+ "futures",
+ "lazy_static",
+ "lighthouse_metrics 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "task_executor"
+version = "0.1.0"
 source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
 dependencies = [
  "exit-future",
  "futures",
  "lazy_static",
- "lighthouse_metrics",
+ "lighthouse_metrics 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tokio",
  "tracing",
 ]
@@ -8224,7 +8338,7 @@ dependencies = [
  "rpc 0.1.0",
  "storage_with_stream",
  "stream",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tokio",
  "tokio-stream",
  "toml 0.5.11",
@@ -8235,12 +8349,27 @@ dependencies = [
 [[package]]
 name = "zgs_seal"
 version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "ethereum-types 0.14.1",
+ "tiny-keccak",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+]
+
+[[package]]
+name = "zgs_seal"
+version = "0.1.0"
 source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
 dependencies = [
  "ethereum-types 0.14.1",
  "tiny-keccak",
- "zgs_spec",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
 ]
+
+[[package]]
+name = "zgs_spec"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 
 [[package]]
 name = "zgs_spec"
@@ -8250,7 +8379,7 @@ source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d
 [[package]]
 name = "zgs_version"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#588bf39d7deb3d9ae3896c0418cc3e272ee18ab4"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "git-version",
  "target_info",

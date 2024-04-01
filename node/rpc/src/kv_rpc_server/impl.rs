@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use crate::error;
 use crate::types::KeyValueSegment;
-use crate::types::Segment;
 use crate::types::ValueSegment;
 use crate::Context;
 use ethereum_types::H160;
 use kv_types::KeyValuePair;
 use storage_with_stream::log_store::log_manager::ENTRY_SIZE;
+use zgs_rpc::types::Segment;
 
 use super::api::KeyValueRpcServer;
 use ethereum_types::H256;
