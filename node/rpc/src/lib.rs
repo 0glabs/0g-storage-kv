@@ -4,7 +4,7 @@ extern crate tracing;
 mod config;
 mod error;
 mod kv_rpc_server;
-mod types;
+pub mod types;
 
 use futures::channel::mpsc::Sender;
 pub use jsonrpsee::http_client::HttpClient;
@@ -18,6 +18,7 @@ use task_executor::ShutdownReason;
 use tokio::sync::RwLock;
 
 pub use config::Config as RPCConfig;
+pub use kv_rpc_server::KeyValueRpcClient;
 
 /// A wrapper around all the items required to spawn the HTTP server.
 ///
