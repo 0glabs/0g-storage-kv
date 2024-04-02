@@ -29,6 +29,15 @@ checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
 name = "aead"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b613b8e1e3cf911a086f53f03bf286f52fd7a7258e4fa606f0ef220d39d8877"
+dependencies = [
+ "generic-array",
+]
+
+[[package]]
+name = "aead"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d122413f284cf2d62fb1b7db97e02edb8cda96d769b16e443a4f6195e35662b0"
@@ -39,13 +48,40 @@ dependencies = [
 
 [[package]]
 name = "aes"
+version = "0.7.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e8b47f52ea9bae42228d07ec09eb676433d7c4ed1ebdf0f1d1c29ed446f1ab8"
+dependencies = [
+ "cfg-if",
+ "cipher 0.3.0",
+ "cpufeatures 0.2.12",
+ "ctr 0.8.0",
+ "opaque-debug",
+]
+
+[[package]]
+name = "aes"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b169f7a6d4742236a0a00c541b845991d0ac43e546831af1249753ab4c3aa3a0"
 dependencies = [
  "cfg-if",
- "cipher",
+ "cipher 0.4.4",
  "cpufeatures 0.2.12",
+]
+
+[[package]]
+name = "aes-gcm"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df5f85a83a7d8b0442b6aa7b504b8212c1733da07b98aae43d4bc21b2cb3cdf6"
+dependencies = [
+ "aead 0.4.3",
+ "aes 0.7.5",
+ "cipher 0.3.0",
+ "ctr 0.8.0",
+ "ghash 0.4.4",
+ "subtle",
 ]
 
 [[package]]
@@ -54,11 +90,11 @@ version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "831010a0f742e1209b3bcea8fab6a8e149051ba6099432c8cb2cc117dec3ead1"
 dependencies = [
- "aead",
- "aes",
- "cipher",
- "ctr",
- "ghash",
+ "aead 0.5.2",
+ "aes 0.8.4",
+ "cipher 0.4.4",
+ "ctr 0.9.2",
+ "ghash 0.5.1",
  "subtle",
 ]
 
@@ -127,7 +163,23 @@ dependencies = [
 [[package]]
 name = "append_merkle"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "anyhow",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "ethereum-types 0.14.1",
+ "lazy_static",
+ "once_cell",
+ "serde",
+ "tiny-keccak",
+ "tracing",
+]
+
+[[package]]
+name = "append_merkle"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
 dependencies = [
  "anyhow",
  "eth2_ssz",
@@ -186,16 +238,16 @@ checksum = "f28243a43d821d11341ab73c80bed182dc015c514b951616cf79bd4af39af0c3"
 dependencies = [
  "concurrent-queue",
  "event-listener 5.2.0",
- "event-listener-strategy 0.5.0",
+ "event-listener-strategy 0.5.1",
  "futures-core",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
 name = "async-executor"
-version = "1.8.0"
+version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17ae5ebefcc48e7452b4987947920dac9450be1110cadf34d1b8c116bdbaf97c"
+checksum = "10b3e585719c2358d2660232671ca8ca4ddb4be4ce8a1842d6c2dc8685303316"
 dependencies = [
  "async-lock 3.3.0",
  "async-task",
@@ -276,7 +328,7 @@ checksum = "d034b430882f8381900d3fe6f0aaa3ad94f2cb4ac519b429692a1bc2dda4ae7b"
 dependencies = [
  "event-listener 4.0.3",
  "event-listener-strategy 0.4.0",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
@@ -335,7 +387,7 @@ dependencies = [
  "log",
  "memchr",
  "once_cell",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "pin-utils",
  "slab",
  "wasm-bindgen-futures",
@@ -370,7 +422,7 @@ checksum = "a507401cad91ec6a857ed5513a2073c82a9b9048762b885bb98655b306964681"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -394,7 +446,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "memchr",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
@@ -402,6 +454,18 @@ name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
+
+[[package]]
+name = "attohttpc"
+version = "0.16.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fdb8867f378f33f78a811a8eb9bf108ad99430d7aad43315dd9319c827ef6247"
+dependencies = [
+ "http",
+ "log",
+ "url",
+ "wildmatch",
+]
 
 [[package]]
 name = "atty"
@@ -422,7 +486,7 @@ checksum = "3c87f3f15e7794432337fc718554eaa4dc8f04c9677a950ffe366f20a162ae42"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -445,6 +509,12 @@ dependencies = [
  "object",
  "rustc-demangle",
 ]
+
+[[package]]
+name = "base16ct"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "349a06037c7bf932dd7e7d1f653678b2038b9ad46a74102f1fc7bd7872678cce"
 
 [[package]]
 name = "base16ct"
@@ -509,7 +579,7 @@ dependencies = [
  "regex",
  "rustc-hash",
  "shlex",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -756,7 +826,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3613f74bd2eac03dad61bd53dbe620703d4371614fe0bc3b9f04dd36fe4e818"
 dependencies = [
  "cfg-if",
- "cipher",
+ "cipher 0.4.4",
  "cpufeatures 0.2.12",
 ]
 
@@ -766,11 +836,27 @@ version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10cd79432192d1c0f4e1a0fef9527696cc039165d729fb41b3f4f4f354c2dc35"
 dependencies = [
- "aead",
+ "aead 0.5.2",
  "chacha20",
- "cipher",
+ "cipher 0.4.4",
  "poly1305",
  "zeroize",
+]
+
+[[package]]
+name = "channel"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
+name = "channel"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "tokio",
 ]
 
 [[package]]
@@ -785,6 +871,47 @@ dependencies = [
  "num-traits",
  "wasm-bindgen",
  "windows-targets 0.52.4",
+]
+
+[[package]]
+name = "chunk_pool"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "anyhow",
+ "async-lock 2.8.0",
+ "hashlink 0.8.4",
+ "log_entry_sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage-async 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "chunk_pool"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "anyhow",
+ "async-lock 2.8.0",
+ "hashlink 0.8.4",
+ "log_entry_sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage-async 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "cipher"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ee52072ec15386f770805afd189a01c8841be8696bed250fa2f13c4c0d6dfb7"
+dependencies = [
+ "generic-array",
 ]
 
 [[package]]
@@ -853,7 +980,7 @@ dependencies = [
  "coins-core",
  "digest 0.10.7",
  "hmac 0.12.1",
- "k256",
+ "k256 0.13.3",
  "serde",
  "sha2 0.10.8",
  "thiserror",
@@ -952,7 +1079,16 @@ checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 [[package]]
 name = "contract-interface"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "ethers",
+ "serde_json",
+]
+
+[[package]]
+name = "contract-interface"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
 dependencies = [
  "ethers",
  "serde_json",
@@ -1052,6 +1188,18 @@ checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
 name = "crypto-bigint"
+version = "0.4.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef2b4b23cddf68b89b8f8069890e8c270d54e2d5fe1b143820234805e4cb17ef"
+dependencies = [
+ "generic-array",
+ "rand_core 0.6.4",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
+name = "crypto-bigint"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0dc92fb57ca44df6db8059111ab3af99a63d5d0f8375d9972e319a379c6bab76"
@@ -1085,11 +1233,20 @@ dependencies = [
 
 [[package]]
 name = "ctr"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "049bb91fb4aaf0e3c7efa6cd5ef877dbbbd15b39dad06d9948de4ec8a75761ea"
+dependencies = [
+ "cipher 0.3.0",
+]
+
+[[package]]
+name = "ctr"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0369ee1ad671834580515889b80f2ea915f23b8be8d0daa4bbaf2ac5c7590835"
 dependencies = [
- "cipher",
+ "cipher 0.4.4",
 ]
 
 [[package]]
@@ -1150,7 +1307,7 @@ checksum = "f46882e17999c6cc590af592290432be3bce0428cb0d5f8b6715e4dc7b383eb3"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -1196,9 +1353,19 @@ checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
 
 [[package]]
 name = "der"
-version = "0.7.8"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fffa369a668c8af7dbf8b5e56c9f744fbd399949ed171606040001947de40b1c"
+checksum = "f1a467a65c5e759bce6e65eaf91cc29f466cdc57cb65777bd646872a8a1fd4de"
+dependencies = [
+ "const-oid",
+ "zeroize",
+]
+
+[[package]]
+name = "der"
+version = "0.7.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f55bf8e7b65898637379c1b74eb1551107c8294ed26d855ceb9fd1a09cfc9bc0"
 dependencies = [
  "const-oid",
  "zeroize",
@@ -1246,12 +1413,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "directory"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+
+[[package]]
+name = "directory"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+
+[[package]]
+name = "dirs"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca3aa72a6f96ea37bbc5aa912f6788242832f75369bdfdadcb0e38423f100059"
+dependencies = [
+ "dirs-sys 0.3.7",
+]
+
+[[package]]
 name = "dirs"
 version = "5.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
 dependencies = [
- "dirs-sys",
+ "dirs-sys 0.4.1",
 ]
 
 [[package]]
@@ -1262,6 +1448,17 @@ checksum = "b98cf8ebf19c3d1b223e151f99a4f9f0690dca41414773390fc824184ac833e1"
 dependencies = [
  "cfg-if",
  "dirs-sys-next",
+]
+
+[[package]]
+name = "dirs-sys"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b1d1d91c932ef41c0f2663aa8b0ca0342d444d842c06914aa0a7e352d0bada6"
+dependencies = [
+ "libc",
+ "redox_users",
+ "winapi",
 ]
 
 [[package]]
@@ -1288,6 +1485,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "discv5"
+version = "0.1.0-beta.13"
+dependencies = [
+ "aes 0.7.5",
+ "aes-gcm 0.9.4",
+ "arrayvec",
+ "digest 0.10.7",
+ "enr 0.6.2",
+ "fnv",
+ "futures",
+ "hashlink 0.7.0",
+ "hex",
+ "hkdf",
+ "lazy_static",
+ "libp2p-core 0.30.2",
+ "lru",
+ "parking_lot 0.11.2",
+ "rand 0.8.5",
+ "rlp",
+ "sha2 0.10.8",
+ "smallvec",
+ "tokio",
+ "tokio-stream",
+ "tokio-util 0.6.10",
+ "tracing",
+ "tracing-subscriber",
+ "uint",
+ "zeroize",
+]
+
+[[package]]
 name = "dns-parser"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1310,17 +1538,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56ce8c6da7551ec6c462cbaf3bfbc75131ebbfa1c944aeaa9dab51ca1c5f0c3b"
 
 [[package]]
+name = "duration-str"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9f037c488d179e21c87ef5fa9c331e8e62f5dddfa84618b41bb197da03edff1"
+dependencies = [
+ "chrono",
+ "nom",
+ "rust_decimal",
+ "serde",
+ "thiserror",
+ "time",
+]
+
+[[package]]
+name = "ecdsa"
+version = "0.14.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413301934810f597c1d19ca71c8710e99a3f1ba28a0d2ebc01551a2daeea3c5c"
+dependencies = [
+ "der 0.6.1",
+ "elliptic-curve 0.12.3",
+ "rfc6979 0.3.1",
+ "signature 1.6.4",
+]
+
+[[package]]
 name = "ecdsa"
 version = "0.16.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee27f32b5c5292967d2d4a9d7f1e0b0aed2c15daded5a60300e4abb9d8020bca"
 dependencies = [
- "der",
+ "der 0.7.9",
  "digest 0.10.7",
- "elliptic-curve",
- "rfc6979",
+ "elliptic-curve 0.13.8",
+ "rfc6979 0.4.0",
  "signature 2.2.0",
- "spki",
+ "spki 0.7.3",
 ]
 
 [[package]]
@@ -1354,19 +1608,39 @@ checksum = "11157ac094ffbdde99aa67b23417ebdd801842852b500e395a45a9c0aac03e4a"
 
 [[package]]
 name = "elliptic-curve"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7bb888ab5300a19b8e5bceef25ac745ad065f3c9f7efc6de1b91958110891d3"
+dependencies = [
+ "base16ct 0.1.1",
+ "crypto-bigint 0.4.9",
+ "der 0.6.1",
+ "digest 0.10.7",
+ "ff 0.12.1",
+ "generic-array",
+ "group 0.12.1",
+ "pkcs8 0.9.0",
+ "rand_core 0.6.4",
+ "sec1 0.3.0",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
+name = "elliptic-curve"
 version = "0.13.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6043086bf7973472e0c7dff2142ea0b680d30e18d9cc40f267efbf222bd47"
 dependencies = [
- "base16ct",
- "crypto-bigint",
+ "base16ct 0.2.0",
+ "crypto-bigint 0.5.5",
  "digest 0.10.7",
- "ff",
+ "ff 0.13.0",
  "generic-array",
- "group",
- "pkcs8",
+ "group 0.13.0",
+ "pkcs8 0.10.2",
  "rand_core 0.6.4",
- "sec1",
+ "sec1 0.7.3",
  "subtle",
  "zeroize",
 ]
@@ -1391,6 +1665,24 @@ dependencies = [
 
 [[package]]
 name = "enr"
+version = "0.6.2"
+dependencies = [
+ "base64 0.13.1",
+ "bs58 0.4.0",
+ "bytes",
+ "ed25519-dalek",
+ "hex",
+ "k256 0.11.6",
+ "log",
+ "rand 0.8.5",
+ "rlp",
+ "serde",
+ "sha3",
+ "zeroize",
+]
+
+[[package]]
+name = "enr"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a3d8dc56e02f954cac8eb489772c552c473346fc34f67412bb6244fd647f7e4"
@@ -1398,7 +1690,7 @@ dependencies = [
  "base64 0.21.7",
  "bytes",
  "hex",
- "k256",
+ "k256 0.13.3",
  "log",
  "rand 0.8.5",
  "rlp",
@@ -1451,8 +1743,8 @@ version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fda3bf123be441da5260717e0661c25a2fd9cb2b2c1d20bf2e05580047158ab"
 dependencies = [
- "aes",
- "ctr",
+ "aes 0.8.4",
+ "ctr 0.9.2",
  "digest 0.10.7",
  "hex",
  "hmac 0.12.1",
@@ -1665,7 +1957,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
- "syn 2.0.55",
+ "syn 2.0.57",
  "toml 0.8.12",
  "walkdir",
 ]
@@ -1683,7 +1975,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde_json",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -1697,10 +1989,10 @@ dependencies = [
  "cargo_metadata",
  "chrono",
  "const-hex",
- "elliptic-curve",
+ "elliptic-curve 0.13.8",
  "ethabi",
  "generic-array",
- "k256",
+ "k256 0.13.3",
  "num_enum",
  "once_cell",
  "open-fastrlp",
@@ -1708,8 +2000,8 @@ dependencies = [
  "rlp",
  "serde",
  "serde_json",
- "strum",
- "syn 2.0.55",
+ "strum 0.26.2",
+ "syn 2.0.57",
  "tempfile",
  "thiserror",
  "tiny-keccak",
@@ -1770,7 +2062,7 @@ dependencies = [
  "base64 0.21.7",
  "bytes",
  "const-hex",
- "enr",
+ "enr 0.10.0",
  "ethers-core",
  "futures-channel",
  "futures-core",
@@ -1807,7 +2099,7 @@ dependencies = [
  "coins-bip32",
  "coins-bip39",
  "const-hex",
- "elliptic-curve",
+ "elliptic-curve 0.13.8",
  "eth-keystore",
  "ethers-core",
  "rand 0.8.5",
@@ -1824,7 +2116,7 @@ checksum = "66244a771d9163282646dbeffe0e6eca4dda4146b6498644e678ac6089b11edd"
 dependencies = [
  "cfg-if",
  "const-hex",
- "dirs",
+ "dirs 5.0.1",
  "dunce",
  "ethers-core",
  "glob",
@@ -1862,7 +2154,7 @@ checksum = "d93877bcde0eb80ca09131a08d23f0a5c18a620b01db137dba666d18cd9b30c2"
 dependencies = [
  "concurrent-queue",
  "parking",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
@@ -1873,7 +2165,7 @@ checksum = "67b215c49b2b248c855fb73579eb1f4f26c38ffdc12973e20e07b91d78d5646e"
 dependencies = [
  "concurrent-queue",
  "parking",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
@@ -1884,7 +2176,7 @@ checksum = "2b5fb89194fa3cad959b833185b3063ba881dbfc7030680b314250779fb4cc91"
 dependencies = [
  "concurrent-queue",
  "parking",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
@@ -1894,17 +2186,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "958e4d70b6d5e81971bebec42271ec641e7ff4e170a6fa605f2b8a8b65cb97d3"
 dependencies = [
  "event-listener 4.0.3",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
 name = "event-listener-strategy"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "feedafcaa9b749175d5ac357452a9d41ea2911da598fde46ce1fe02c37751291"
+checksum = "332f51cb23d20b0de8458b86580878211da09bcd4503cb579c225b3d124cabb3"
 dependencies = [
  "event-listener 5.2.0",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
@@ -1955,6 +2247,16 @@ checksum = "658bd65b1cf4c852a3cc96f18a8ce7b5640f6b703f905c7d74532294c2a63984"
 
 [[package]]
 name = "ff"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d013fc25338cc558c5c2cfbad646908fb23591e2404481826742b651c9af7160"
+dependencies = [
+ "rand_core 0.6.4",
+ "subtle",
+]
+
+[[package]]
+name = "ff"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
@@ -1968,6 +2270,34 @@ name = "fiat-crypto"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c007b1ae3abe1cb6f85a16305acd418b7ca6343b953633fee2b76d8f108b830f"
+
+[[package]]
+name = "file_location_cache"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "hashlink 0.8.4",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "parking_lot 0.12.1",
+ "priority-queue",
+ "rand 0.8.5",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tracing",
+]
+
+[[package]]
+name = "file_location_cache"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "hashlink 0.8.4",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "parking_lot 0.12.1",
+ "priority-queue",
+ "rand 0.8.5",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "tracing",
+]
 
 [[package]]
 name = "fixed-hash"
@@ -2113,7 +2443,7 @@ dependencies = [
  "futures-io",
  "memchr",
  "parking",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "waker-fn",
 ]
 
@@ -2127,7 +2457,7 @@ dependencies = [
  "futures-core",
  "futures-io",
  "parking",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
@@ -2148,7 +2478,7 @@ checksum = "87750cf4b7a4c0625b1529e4c543c2182106e4dedc60a2a6455e00d212c489ac"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -2197,7 +2527,7 @@ dependencies = [
  "futures-sink",
  "futures-task",
  "memchr",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "pin-utils",
  "slab",
 ]
@@ -2246,12 +2576,22 @@ dependencies = [
 
 [[package]]
 name = "ghash"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1583cc1656d7839fd3732b80cf4f38850336cdb9b8ded1cd399ca62958de3c99"
+dependencies = [
+ "opaque-debug",
+ "polyval 0.5.3",
+]
+
+[[package]]
+name = "ghash"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0d8a4362ccb29cb0b265253fb0a2728f592895ee6854fd9bc13f2ffda266ff1"
 dependencies = [
  "opaque-debug",
- "polyval",
+ "polyval 0.6.2",
 ]
 
 [[package]]
@@ -2259,6 +2599,26 @@ name = "gimli"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
+
+[[package]]
+name = "git-version"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ad568aa3db0fcbc81f2f116137f263d7304f512a1209b35b85150d3ef88ad19"
+dependencies = [
+ "git-version-macro",
+]
+
+[[package]]
+name = "git-version-macro"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53010ccb100b96a67bc32c0175f0ed1426b31b655d562898e57325f81c023ac0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.57",
+]
 
 [[package]]
 name = "glob"
@@ -2326,11 +2686,22 @@ dependencies = [
 
 [[package]]
 name = "group"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5dfbfb3a6cfbd390d5c9564ab283a0349b9b9fcd46a706c1eb10e0db70bfbac7"
+dependencies = [
+ "ff 0.12.1",
+ "rand_core 0.6.4",
+ "subtle",
+]
+
+[[package]]
+name = "group"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0f9ef7462f7c099f518d754361858f86d8a07af53ba9af0fe635bbccb151a63"
 dependencies = [
- "ff",
+ "ff 0.13.0",
  "rand_core 0.6.4",
  "subtle",
 ]
@@ -2350,8 +2721,17 @@ dependencies = [
  "indexmap 2.2.6",
  "slab",
  "tokio",
- "tokio-util",
+ "tokio-util 0.7.10",
  "tracing",
+]
+
+[[package]]
+name = "hashbrown"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
+dependencies = [
+ "ahash 0.7.8",
 ]
 
 [[package]]
@@ -2384,11 +2764,38 @@ dependencies = [
 
 [[package]]
 name = "hashlink"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7249a3129cbc1ffccd74857f81464a323a152173cdb134e0fd81bc803b29facf"
+dependencies = [
+ "hashbrown 0.11.2",
+]
+
+[[package]]
+name = "hashlink"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8094feaf31ff591f651a2664fb9cfd92bba7a60ce3197265e9482ebe753c8f7"
 dependencies = [
  "hashbrown 0.14.3",
+]
+
+[[package]]
+name = "hashset_delay"
+version = "0.2.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "futures",
+ "tokio-util 0.6.10",
+]
+
+[[package]]
+name = "hashset_delay"
+version = "0.2.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "futures",
+ "tokio-util 0.6.10",
 ]
 
 [[package]]
@@ -2432,6 +2839,15 @@ name = "hex_fmt"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b07f60793ff0a4d9cef0f18e63b5357e06209987153a64648c972c1e5aff336f"
+
+[[package]]
+name = "hkdf"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b5f8eb2ad728638ea2c7d47a21db23b7b58a72ed6a38256b8a1849f15fbbdf7"
+dependencies = [
+ "hmac 0.12.1",
+]
 
 [[package]]
 name = "hmac"
@@ -2502,7 +2918,7 @@ checksum = "7ceab25649e9960c0311ea418d17bee82c0dcec1bd053b5f9a66e265a693bed2"
 dependencies = [
  "bytes",
  "http",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
 ]
 
 [[package]]
@@ -2533,7 +2949,7 @@ dependencies = [
  "httparse",
  "httpdate",
  "itoa",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "socket2 0.5.6",
  "tokio",
  "tower-service",
@@ -2632,6 +3048,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "if-addrs"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cabb0019d51a643781ff15c9c8a3e5dedc365c47211270f4e8f82812fedd8f0a"
+dependencies = [
+ "libc",
+ "windows-sys 0.48.0",
+]
+
+[[package]]
 name = "if-watch"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2641,12 +3067,25 @@ dependencies = [
  "core-foundation",
  "fnv",
  "futures",
- "if-addrs",
+ "if-addrs 0.7.0",
  "ipnet",
  "log",
  "rtnetlink",
  "system-configuration",
  "windows",
+]
+
+[[package]]
+name = "igd"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "556b5a75cd4adb7c4ea21c64af1c48cefb2ce7d43dc4352c720a1fe47c21f355"
+dependencies = [
+ "attohttpc",
+ "log",
+ "rand 0.8.5",
+ "url",
+ "xmltree",
 ]
 
 [[package]]
@@ -2858,7 +3297,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-rustls 0.23.4",
- "tokio-util",
+ "tokio-util 0.7.10",
  "tracing",
  "webpki-roots 0.22.6",
 ]
@@ -2992,7 +3431,7 @@ dependencies = [
  "soketto",
  "tokio",
  "tokio-stream",
- "tokio-util",
+ "tokio-util 0.7.10",
  "tracing",
 ]
 
@@ -3012,13 +3451,25 @@ dependencies = [
 
 [[package]]
 name = "k256"
+version = "0.11.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72c1e0b51e7ec0a97369623508396067a486bd0cbed95a2659a4b863d28cfc8b"
+dependencies = [
+ "cfg-if",
+ "ecdsa 0.14.8",
+ "elliptic-curve 0.12.3",
+ "sha2 0.10.8",
+]
+
+[[package]]
+name = "k256"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "956ff9b67e26e1a6a866cb758f12c6f8746208489e3e4a4b5580802f2f0a587b"
 dependencies = [
  "cfg-if",
- "ecdsa",
- "elliptic-curve",
+ "ecdsa 0.16.9",
+ "elliptic-curve 0.13.8",
  "once_cell",
  "sha2 0.10.8",
  "signature 2.2.0",
@@ -3047,16 +3498,16 @@ name = "kv_types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "chrono",
  "eth2_ssz",
  "eth2_ssz_derive",
  "eth2_ssz_types",
  "ethereum-types 0.14.1",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "serde",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tiny-keccak",
  "tracing",
  "typenum",
@@ -3196,7 +3647,7 @@ dependencies = [
  "libp2p-wasm-ext",
  "libp2p-websocket",
  "libp2p-yamux",
- "multiaddr",
+ "multiaddr 0.14.0",
  "parking_lot 0.12.1",
  "pin-project 1.1.5",
  "rand 0.7.3",
@@ -3224,6 +3675,41 @@ dependencies = [
 
 [[package]]
 name = "libp2p-core"
+version = "0.30.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86aad7d54df283db817becded03e611137698a6509d4237a96881976a162340c"
+dependencies = [
+ "asn1_der",
+ "bs58 0.4.0",
+ "ed25519-dalek",
+ "either",
+ "fnv",
+ "futures",
+ "futures-timer",
+ "instant",
+ "lazy_static",
+ "libsecp256k1",
+ "log",
+ "multiaddr 0.13.0",
+ "multihash 0.14.0",
+ "multistream-select 0.10.4",
+ "parking_lot 0.11.2",
+ "pin-project 1.1.5",
+ "prost 0.9.0",
+ "prost-build 0.9.0",
+ "rand 0.8.5",
+ "ring 0.16.20",
+ "rw-stream-sink 0.2.1",
+ "sha2 0.9.9",
+ "smallvec",
+ "thiserror",
+ "unsigned-varint",
+ "void",
+ "zeroize",
+]
+
+[[package]]
+name = "libp2p-core"
 version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db5b02602099fb75cb2d16f9ea860a320d6eb82ce41e95ab680912c454805cd5"
@@ -3238,9 +3724,9 @@ dependencies = [
  "instant",
  "lazy_static",
  "log",
- "multiaddr",
- "multihash",
- "multistream-select",
+ "multiaddr 0.14.0",
+ "multihash 0.16.3",
+ "multistream-select 0.11.0",
  "parking_lot 0.12.1",
  "pin-project 1.1.5",
  "prost 0.9.0",
@@ -3273,9 +3759,9 @@ dependencies = [
  "lazy_static",
  "libsecp256k1",
  "log",
- "multiaddr",
- "multihash",
- "multistream-select",
+ "multiaddr 0.14.0",
+ "multihash 0.16.3",
+ "multistream-select 0.11.0",
  "parking_lot 0.12.1",
  "pin-project 1.1.5",
  "prost 0.10.4",
@@ -3642,7 +4128,7 @@ dependencies = [
  "async-io 1.13.0",
  "futures",
  "futures-timer",
- "if-addrs",
+ "if-addrs 0.7.0",
  "if-watch",
  "ipnet",
  "libc",
@@ -3712,13 +4198,12 @@ dependencies = [
 
 [[package]]
 name = "libredox"
-version = "0.0.1"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85c833ca1e66078851dba29046874e38f08b2c883700aa29a03ddd3b23814ee8"
+checksum = "c0ff37bd590ca25063e35af745c343cb7a0271906fb7b37e4813e8f79f00268d"
 dependencies = [
  "bitflags 2.5.0",
  "libc",
- "redox_syscall 0.4.1",
 ]
 
 [[package]]
@@ -3809,7 +4294,16 @@ dependencies = [
 [[package]]
 name = "lighthouse_metrics"
 version = "0.2.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "lazy_static",
+ "prometheus",
+]
+
+[[package]]
+name = "lighthouse_metrics"
+version = "0.2.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
 dependencies = [
  "lazy_static",
  "prometheus",
@@ -3857,9 +4351,9 @@ name = "log_entry_sync"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "async-trait",
- "contract-interface",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "ethereum-types 0.14.1",
  "ethers",
  "futures",
@@ -3868,10 +4362,56 @@ dependencies = [
  "jsonrpsee",
  "kv_types",
  "serde_json",
- "shared_types",
- "storage",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "storage_with_stream",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "log_entry_sync"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "anyhow",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "async-trait",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "ethereum-types 0.14.1",
+ "ethers",
+ "futures",
+ "futures-core",
+ "futures-util",
+ "jsonrpsee",
+ "serde_json",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "log_entry_sync"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "anyhow",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "async-trait",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "ethereum-types 0.14.1",
+ "ethers",
+ "futures",
+ "futures-core",
+ "futures-util",
+ "jsonrpsee",
+ "serde_json",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "thiserror",
  "tokio",
 ]
@@ -3934,7 +4474,15 @@ checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
 [[package]]
 name = "merkle_light"
 version = "0.4.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "rayon",
+]
+
+[[package]]
+name = "merkle_light"
+version = "0.4.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
 dependencies = [
  "rayon",
 ]
@@ -3942,9 +4490,18 @@ dependencies = [
 [[package]]
 name = "merkle_tree"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
- "merkle_light",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "merkle_tree"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tiny-keccak",
 ]
 
@@ -3953,6 +4510,52 @@ name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
+
+[[package]]
+name = "miner"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "async-trait",
+ "blake2",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "ethereum-types 0.14.1",
+ "ethers",
+ "lazy_static",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "rand 0.8.5",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tiny-keccak",
+ "tokio",
+ "tracing",
+ "zgs_seal 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+]
+
+[[package]]
+name = "miner"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "async-trait",
+ "blake2",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "ethereum-types 0.14.1",
+ "ethers",
+ "lazy_static",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "rand 0.8.5",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "tiny-keccak",
+ "tokio",
+ "tracing",
+ "zgs_seal 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+]
 
 [[package]]
 name = "minimal-lexical"
@@ -3982,6 +4585,24 @@ dependencies = [
 
 [[package]]
 name = "multiaddr"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48ee4ea82141951ac6379f964f71b20876d43712bea8faf6dd1a375e08a46499"
+dependencies = [
+ "arrayref",
+ "bs58 0.4.0",
+ "byteorder",
+ "data-encoding",
+ "multihash 0.14.0",
+ "percent-encoding",
+ "serde",
+ "static_assertions",
+ "unsigned-varint",
+ "url",
+]
+
+[[package]]
+name = "multiaddr"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c580bfdd8803cce319b047d239559a22f809094aaea4ac13902a1fdcfcd4261"
@@ -3990,12 +4611,25 @@ dependencies = [
  "bs58 0.4.0",
  "byteorder",
  "data-encoding",
- "multihash",
+ "multihash 0.16.3",
  "percent-encoding",
  "serde",
  "static_assertions",
  "unsigned-varint",
  "url",
+]
+
+[[package]]
+name = "multihash"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "752a61cd890ff691b4411423d23816d5866dd5621e4d1c5687a53b94b5a979d8"
+dependencies = [
+ "digest 0.9.0",
+ "generic-array",
+ "multihash-derive 0.7.2",
+ "sha2 0.9.9",
+ "unsigned-varint",
 ]
 
 [[package]]
@@ -4006,9 +4640,23 @@ checksum = "1c346cf9999c631f002d8f977c4eaeaa0e6386f16007202308d0b3757522c2cc"
 dependencies = [
  "core2",
  "digest 0.10.7",
- "multihash-derive",
+ "multihash-derive 0.8.1",
  "sha2 0.10.8",
  "unsigned-varint",
+]
+
+[[package]]
+name = "multihash-derive"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "424f6e86263cd5294cbd7f1e95746b95aca0e0d66bff31e5a40d6baa87b4aa99"
+dependencies = [
+ "proc-macro-crate 1.1.3",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+ "synstructure",
 ]
 
 [[package]]
@@ -4030,6 +4678,20 @@ name = "multimap"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5ce46fe64a9d73be07dcbe690a38ce1b293be448fd8ce1e6c1b8062c9f72c6a"
+
+[[package]]
+name = "multistream-select"
+version = "0.10.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56a336acba8bc87c8876f6425407dbbe6c417bf478b22015f8fb0994ef3bc0ab"
+dependencies = [
+ "bytes",
+ "futures",
+ "log",
+ "pin-project 1.1.5",
+ "smallvec",
+ "unsigned-varint",
+]
 
 [[package]]
 name = "multistream-select"
@@ -4109,6 +4771,96 @@ dependencies = [
  "futures",
  "libc",
  "log",
+]
+
+[[package]]
+name = "network"
+version = "0.2.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "directory 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "dirs 4.0.0",
+ "discv5",
+ "error-chain",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "eth2_ssz_types",
+ "ethereum-types 0.14.1",
+ "fnv",
+ "futures",
+ "hashset_delay 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "hex",
+ "if-addrs 0.10.2",
+ "igd",
+ "lazy_static",
+ "libp2p",
+ "lighthouse_metrics 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "lru",
+ "parking_lot 0.12.1",
+ "prometheus-client",
+ "rand 0.8.5",
+ "regex",
+ "serde",
+ "serde_derive",
+ "sha2 0.10.8",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "slog",
+ "smallvec",
+ "snap",
+ "strum 0.24.1",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tiny-keccak",
+ "tokio",
+ "tokio-io-timeout",
+ "tokio-util 0.6.10",
+ "tracing",
+ "unsigned-varint",
+ "zgs_version 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+]
+
+[[package]]
+name = "network"
+version = "0.2.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "directory 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "dirs 4.0.0",
+ "discv5",
+ "error-chain",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "eth2_ssz_types",
+ "ethereum-types 0.14.1",
+ "fnv",
+ "futures",
+ "hashset_delay 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "hex",
+ "if-addrs 0.10.2",
+ "igd",
+ "lazy_static",
+ "libp2p",
+ "lighthouse_metrics 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "lru",
+ "parking_lot 0.12.1",
+ "prometheus-client",
+ "rand 0.8.5",
+ "regex",
+ "serde",
+ "serde_derive",
+ "sha2 0.10.8",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "slog",
+ "smallvec",
+ "snap",
+ "strum 0.24.1",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "tiny-keccak",
+ "tokio",
+ "tokio-io-timeout",
+ "tokio-util 0.6.10",
+ "tracing",
+ "unsigned-varint",
+ "zgs_version 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
 ]
 
 [[package]]
@@ -4230,7 +4982,7 @@ dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -4540,7 +5292,7 @@ dependencies = [
  "phf_shared 0.11.2",
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -4598,7 +5350,7 @@ checksum = "2f38a4412a78282e09a2cf38d195ea5420d15ba0602cb375210efbc877243965"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -4609,9 +5361,9 @@ checksum = "257b64915a082f7811703966789728173279bdebb956b143dbcd23f6f970a777"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.13"
+version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8afb450f006bf6385ca15ef45d71d2288452bc3683ce2e2cacc0d18e4be60b58"
+checksum = "bda66fc9667c18cb2758a2ac84d1167245054bcf85d5d1aaa6923f45801bdd02"
 
 [[package]]
 name = "pin-utils"
@@ -4632,12 +5384,22 @@ dependencies = [
 
 [[package]]
 name = "pkcs8"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9eca2c590a5f85da82668fa685c09ce2888b9430e83299debf1f34b65fd4a4ba"
+dependencies = [
+ "der 0.6.1",
+ "spki 0.6.0",
+]
+
+[[package]]
+name = "pkcs8"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
 dependencies = [
- "der",
- "spki",
+ "der 0.7.9",
+ "spki 0.7.3",
 ]
 
 [[package]]
@@ -4664,7 +5426,7 @@ dependencies = [
  "concurrent-queue",
  "libc",
  "log",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "windows-sys 0.48.0",
 ]
 
@@ -4677,7 +5439,7 @@ dependencies = [
  "cfg-if",
  "concurrent-queue",
  "hermit-abi 0.3.9",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "rustix 0.38.32",
  "tracing",
  "windows-sys 0.52.0",
@@ -4691,7 +5453,19 @@ checksum = "8159bd90725d2df49889a078b54f4f79e87f1f8a8444194cdca81d38f5393abf"
 dependencies = [
  "cpufeatures 0.2.12",
  "opaque-debug",
- "universal-hash",
+ "universal-hash 0.5.1",
+]
+
+[[package]]
+name = "polyval"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8419d2b623c7c0896ff2d5d96e2cb4ede590fed28fcc34934f4c33c036e620a1"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.2.12",
+ "opaque-debug",
+ "universal-hash 0.4.1",
 ]
 
 [[package]]
@@ -4703,7 +5477,7 @@ dependencies = [
  "cfg-if",
  "cpufeatures 0.2.12",
  "opaque-debug",
- "universal-hash",
+ "universal-hash 0.5.1",
 ]
 
 [[package]]
@@ -4731,7 +5505,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d3928fb5db768cb86f891ff014f0144589297e3c6a1aba6ed7cecfdace270c7"
 dependencies = [
  "proc-macro2",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -4759,6 +5533,16 @@ dependencies = [
  "impl-serde 0.4.0",
  "scale-info",
  "uint",
+]
+
+[[package]]
+name = "priority-queue"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0bda9164fe05bc9225752d54aae413343c36f684380005398a6a8fde95fe785"
+dependencies = [
+ "autocfg",
+ "indexmap 1.9.3",
 ]
 
 [[package]]
@@ -5198,9 +5982,9 @@ dependencies = [
 
 [[package]]
 name = "redox_users"
-version = "0.4.4"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a18479200779601e498ada4e8c1e1f50e3ee19deb0259c25825a98b5603b2cb4"
+checksum = "bd283d9651eeda4b2a83a43c1c91b266c40fd76ecd39a50a8c630ae69dc72891"
 dependencies = [
  "getrandom 0.2.12",
  "libredox",
@@ -5282,7 +6066,7 @@ dependencies = [
  "mime",
  "once_cell",
  "percent-encoding",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "rustls 0.21.10",
  "rustls-pemfile",
  "serde",
@@ -5309,6 +6093,17 @@ checksum = "52e44394d2086d010551b14b53b1f24e31647570cd1deb0379e2c21b329aba00"
 dependencies = [
  "hostname",
  "quick-error",
+]
+
+[[package]]
+name = "rfc6979"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7743f17af12fa0b03b803ba12cd6a8d9483a587e89c69445e3909655c0b9fabb"
+dependencies = [
+ "crypto-bigint 0.4.9",
+ "hmac 0.12.1",
+ "zeroize",
 ]
 
 [[package]]
@@ -5396,20 +6191,71 @@ dependencies = [
 name = "rpc"
 version = "0.1.0"
 dependencies = [
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "base64 0.13.1",
  "ethereum-types 0.14.1",
  "futures",
  "futures-channel",
  "jsonrpsee",
  "kv_types",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "rpc 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "serde",
  "serde_json",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "storage_with_stream",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "rpc"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "base64 0.13.1",
+ "chunk_pool 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "futures",
+ "futures-channel",
+ "jsonrpsee",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "miner 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "serde",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage-async 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "rpc"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "base64 0.13.1",
+ "chunk_pool 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "futures",
+ "futures-channel",
+ "jsonrpsee",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "miner 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "serde",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage-async 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tokio",
  "tracing",
 ]
@@ -5438,9 +6284,19 @@ dependencies = [
  "bitflags 1.3.2",
  "fallible-iterator",
  "fallible-streaming-iterator",
- "hashlink",
+ "hashlink 0.8.4",
  "libsqlite3-sys",
  "smallvec",
+]
+
+[[package]]
+name = "rust_decimal"
+version = "1.35.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1790d1c4c0ca81211399e0e0af16333276f375209e71a37b67698a373db5b47a"
+dependencies = [
+ "arrayvec",
+ "num-traits",
 ]
 
 [[package]]
@@ -5592,7 +6448,7 @@ version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97a22f5af31f73a954c10289c93e8a50cc23d971e80ee446f1f6f7137a088213"
 dependencies = [
- "cipher",
+ "cipher 0.4.4",
 ]
 
 [[package]]
@@ -5667,23 +6523,37 @@ dependencies = [
 
 [[package]]
 name = "sec1"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3be24c1842290c45df0a7bf069e0c268a747ad05a192f2fd7dcfdbc1cba40928"
+dependencies = [
+ "base16ct 0.1.1",
+ "der 0.6.1",
+ "generic-array",
+ "pkcs8 0.9.0",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
+name = "sec1"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3e97a565f76233a6003f9f5c54be1d9c5bdfa3eccfb189469f11ec4901c47dc"
 dependencies = [
- "base16ct",
- "der",
+ "base16ct 0.2.0",
+ "der 0.7.9",
  "generic-array",
- "pkcs8",
+ "pkcs8 0.10.2",
  "subtle",
  "zeroize",
 ]
 
 [[package]]
 name = "security-framework"
-version = "2.9.2"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05b64fb303737d99b81884b2c63433e9ae28abebe5eb5045dcdd175dc2ecf4de"
+checksum = "770452e37cad93e0a50d5abc3990d2bc351c36d0328f86cefec2f2fb206eaef6"
 dependencies = [
  "bitflags 1.3.2",
  "core-foundation",
@@ -5694,9 +6564,9 @@ dependencies = [
 
 [[package]]
 name = "security-framework-sys"
-version = "2.9.1"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e932934257d3b408ed8f30db49d85ea163bfe74961f017f405b025af298f0c7a"
+checksum = "41f3cc463c0ef97e11c3461a9d3787412d30e8e7eb907c79180c4a57bf7c04ef"
 dependencies = [
  "core-foundation-sys",
  "libc",
@@ -5740,7 +6610,7 @@ checksum = "7eb0b34b42edc17f6b7cac84a52a1c5f0e1bb2227e997ca9011ea3dd34e8610b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -5845,22 +6715,43 @@ dependencies = [
 [[package]]
 name = "shared_types"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "chrono",
  "eth2_ssz",
  "eth2_ssz_derive",
  "eth2_ssz_types",
  "ethereum-types 0.14.1",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "serde",
  "tiny-keccak",
  "tracing",
  "typenum",
- "zgs_spec",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+]
+
+[[package]]
+name = "shared_types"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "anyhow",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "chrono",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "eth2_ssz_types",
+ "ethereum-types 0.14.1",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "serde",
+ "tiny-keccak",
+ "tracing",
+ "typenum",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
 ]
 
 [[package]]
@@ -5883,6 +6774,10 @@ name = "signature"
 version = "1.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74233d3b3b2f6d4b006dc19dee745e73e2a6bfb6f93607cd3b02bd5b00797d7c"
+dependencies = [
+ "digest 0.10.7",
+ "rand_core 0.6.4",
+]
 
 [[package]]
 name = "signature"
@@ -5922,10 +6817,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "slog"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8347046d4ebd943127157b94d63abb990fcf729dc4e9978927fdf4ac3c998d06"
+
+[[package]]
 name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
+
+[[package]]
+name = "snap"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b6b67fb9a61334225b5b790716f609cd58395f895b3fe8b328786812a40bc3b"
 
 [[package]]
 name = "snow"
@@ -5933,7 +6840,7 @@ version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "850948bee068e713b8ab860fe1adc4d109676ab4c3b621fd8147f06b261f2f85"
 dependencies = [
- "aes-gcm",
+ "aes-gcm 0.10.3",
  "blake2",
  "chacha20poly1305",
  "curve25519-dalek 4.1.2",
@@ -6008,12 +6915,22 @@ checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 
 [[package]]
 name = "spki"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67cf02bbac7a337dc36e4f5a693db6c21e7863f45070f7064577eb4367a3212b"
+dependencies = [
+ "base64ct",
+ "der 0.6.1",
+]
+
+[[package]]
+name = "spki"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
 dependencies = [
  "base64ct",
- "der",
+ "der 0.7.9",
 ]
 
 [[package]]
@@ -6031,10 +6948,10 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "storage"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "bitmaps",
  "eth2_ssz",
  "eth2_ssz_derive",
@@ -6044,16 +6961,70 @@ dependencies = [
  "kvdb",
  "kvdb-memorydb",
  "kvdb-rocksdb",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "rayon",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "static_assertions",
  "tiny-keccak",
  "tracing",
  "typenum",
- "zgs_seal",
- "zgs_spec",
+ "zgs_seal 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+]
+
+[[package]]
+name = "storage"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "anyhow",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "bitmaps",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "ethereum-types 0.14.1",
+ "hex",
+ "itertools 0.10.5",
+ "kvdb",
+ "kvdb-memorydb",
+ "kvdb-rocksdb",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "rayon",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "static_assertions",
+ "tiny-keccak",
+ "tracing",
+ "typenum",
+ "zgs_seal 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+]
+
+[[package]]
+name = "storage-async"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "anyhow",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "storage-async"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "anyhow",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -6061,7 +7032,7 @@ name = "storage_with_stream"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "async-trait",
  "const_format",
  "eth2_ssz",
@@ -6072,13 +7043,13 @@ dependencies = [
  "kvdb",
  "kvdb-memorydb",
  "kvdb-rocksdb",
- "merkle_light",
- "merkle_tree",
+ "merkle_light 0.4.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "merkle_tree 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "rand 0.8.5",
  "rayon",
  "rusqlite",
- "shared_types",
- "storage",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tempdir",
  "tokio-rusqlite",
  "tracing",
@@ -6090,9 +7061,9 @@ name = "stream"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "append_merkle",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "async-trait",
- "contract-interface",
+ "contract-interface 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "eth2_ssz",
  "eth2_ssz_derive",
  "ethereum-types 0.14.1",
@@ -6100,12 +7071,13 @@ dependencies = [
  "futures",
  "jsonrpsee",
  "kv_types",
- "rpc",
+ "rpc 0.1.0",
+ "rpc 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
  "rusqlite",
  "serde_json",
- "shared_types",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "storage_with_stream",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "thiserror",
  "tokio",
  "tracing",
@@ -6132,11 +7104,33 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "strum"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
+dependencies = [
+ "strum_macros 0.24.3",
+]
+
+[[package]]
+name = "strum"
 version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d8cec3501a5194c432b2b7976db6b7d10ec95c253208b45f83f7136aa985e29"
 dependencies = [
- "strum_macros",
+ "strum_macros 0.26.2",
+]
+
+[[package]]
+name = "strum_macros"
+version = "0.24.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
+dependencies = [
+ "heck 0.4.1",
+ "proc-macro2",
+ "quote",
+ "rustversion",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -6149,14 +7143,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rustversion",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
 name = "subtle"
-version = "2.5.0"
+version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
+checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "svm-rs"
@@ -6164,7 +7158,7 @@ version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "11297baafe5fa0c99d5722458eac6a5e25c01eb1b8e5cd137f54079093daa7a4"
 dependencies = [
- "dirs",
+ "dirs 5.0.1",
  "fs2",
  "hex",
  "once_cell",
@@ -6191,13 +7185,61 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.55"
+version = "2.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "002a1b3dbf967edfafc32655d0f377ab0bb7b994aa1d32c8cc7e9b8bf3ebb8f0"
+checksum = "11a6ae1e52eb25aab8f3fb9fca13be982a373b8f1157ca14b897a825ba4a2d35"
 dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "sync"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "anyhow",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "channel 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "duration-str",
+ "eth2_ssz",
+ "file_location_cache 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "libp2p",
+ "log_entry_sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "rand 0.8.5",
+ "serde",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "storage-async 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "sync"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "anyhow",
+ "append_merkle 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "channel 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "duration-str",
+ "eth2_ssz",
+ "file_location_cache 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "libp2p",
+ "log_entry_sync 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "network 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "rand 0.8.5",
+ "serde",
+ "shared_types 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "storage-async 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -6246,14 +7288,33 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
+name = "target_info"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c63f48baada5c52e65a29eef93ab4f8982681b67f9e8d29c7b05abcfec2b9ffe"
+
+[[package]]
 name = "task_executor"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "exit-future",
  "futures",
  "lazy_static",
- "lighthouse_metrics",
+ "lighthouse_metrics 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "task_executor"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "exit-future",
+ "futures",
+ "lazy_static",
+ "lighthouse_metrics 0.2.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tokio",
  "tracing",
 ]
@@ -6323,7 +7384,7 @@ checksum = "c61f3ba182994efc43764a46c018c347bc492c79f024e705f46567b418f6d4f7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -6403,9 +7464,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.36.0"
+version = "1.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61285f6515fa018fb2d1e46eb21223fff441ee8db5d0f1435e8ab4f5cdb80931"
+checksum = "1adbebffeca75fcfd058afa480fb6c0b81e165a0323f9c9d39c9697e37c46787"
 dependencies = [
  "backtrace",
  "bytes",
@@ -6413,11 +7474,21 @@ dependencies = [
  "mio",
  "num_cpus",
  "parking_lot 0.12.1",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "signal-hook-registry",
  "socket2 0.5.6",
  "tokio-macros",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "tokio-io-timeout"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30b74022ada614a1b4834de765f9bb43877f910cc8ce4be40e89042c9223a8bf"
+dependencies = [
+ "pin-project-lite 0.2.14",
+ "tokio",
 ]
 
 [[package]]
@@ -6428,7 +7499,7 @@ checksum = "5b8a1e28f2deaa14e508979454cb3a223b10b938b45af148bc0986de36f1923b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -6470,9 +7541,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "267ac89e0bec6e691e5813911606935d77c476ff49024f98abcea3e7b15e37af"
 dependencies = [
  "futures-core",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "tokio",
- "tokio-util",
+ "tokio-util 0.7.10",
 ]
 
 [[package]]
@@ -6492,6 +7563,22 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
+version = "0.6.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36943ee01a6d67977dd3f84a5a1d2efeb4ada3a1ae771cadfaa535d9d9fc6507"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "futures-io",
+ "futures-sink",
+ "log",
+ "pin-project-lite 0.2.14",
+ "slab",
+ "tokio",
+]
+
+[[package]]
+name = "tokio-util"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5419f34732d9eb6ee4c3578b7989078579b7f039cbbb9ca2c4da015749371e15"
@@ -6500,7 +7587,7 @@ dependencies = [
  "futures-core",
  "futures-io",
  "futures-sink",
- "pin-project-lite 0.2.13",
+ "pin-project-lite 0.2.14",
  "tokio",
  "tracing",
 ]
@@ -6582,7 +7669,8 @@ version = "0.1.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3523ab5a71916ccf420eebdf5521fcef02141234bbc0b8a49f2fdc4544364ef"
 dependencies = [
- "pin-project-lite 0.2.13",
+ "log",
+ "pin-project-lite 0.2.14",
  "tracing-attributes",
  "tracing-core",
 ]
@@ -6595,7 +7683,7 @@ checksum = "34704c8d6ebcbc939824180af020566b01a7c01f80641264eba0999f6c2b6be7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -6797,6 +7885,16 @@ checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
 
 [[package]]
 name = "universal-hash"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f214e8f697e925001e66ec2c6e37a4ef93f0f78c2eed7814394e10c62025b05"
+dependencies = [
+ "generic-array",
+ "subtle",
+]
+
+[[package]]
+name = "universal-hash"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc1de2c688dc15305988b563c3854064043356019f97a4b46276fe734c4f07ea"
@@ -6807,14 +7905,15 @@ dependencies = [
 
 [[package]]
 name = "unsigned-varint"
-version = "0.7.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6889a77d49f1f013504cec6bf97a2c730394adedaeb1deb5ea08949a50541105"
+checksum = "d86a8dc7f45e4c1b0d30e43038c38f274e77af056aa5f74b93c2cf9eb3c1c836"
 dependencies = [
  "asynchronous-codec",
  "bytes",
  "futures-io",
  "futures-util",
+ "tokio-util 0.6.10",
 ]
 
 [[package]]
@@ -6944,7 +8043,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
  "wasm-bindgen-shared",
 ]
 
@@ -6978,7 +8077,7 @@ checksum = "e94f17b526d0a461a191c78ea52bbce64071ed5c04c9ffe424dcb38f74171bb7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -7056,6 +8155,12 @@ name = "widestring"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "653f141f39ec16bba3c5abe400a0c60da7468261cc2cbf36805022876bc721a8"
+
+[[package]]
+name = "wildmatch"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f44b95f62d34113cf558c93511ac93027e03e9c29a60dd0fd70e6e025c7270a"
 
 [[package]]
 name = "winapi"
@@ -7346,6 +8451,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "xml-rs"
+version = "0.8.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "791978798f0597cfc70478424c2b4fdc2b7a8024aaff78497ef00f24ef674193"
+
+[[package]]
+name = "xmltree"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7d8a75eaf6557bb84a65ace8609883db44a29951042ada9b393151532e41fcb"
+dependencies = [
+ "xml-rs",
+]
+
+[[package]]
 name = "yamux"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7382,7 +8502,7 @@ checksum = "9ce1b18ccd8e73a9321186f97e46f9f04b778851177567b1975109d26a08d2a6"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -7402,7 +8522,7 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -7419,11 +8539,11 @@ dependencies = [
  "http",
  "kv_types",
  "libp2p",
- "log_entry_sync",
- "rpc",
+ "log_entry_sync 0.1.0",
+ "rpc 0.1.0",
  "storage_with_stream",
  "stream",
- "task_executor",
+ "task_executor 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
  "tokio",
  "tokio-stream",
  "toml 0.5.11",
@@ -7434,17 +8554,50 @@ dependencies = [
 [[package]]
 name = "zgs_seal"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
 dependencies = [
  "ethereum-types 0.14.1",
  "tiny-keccak",
- "zgs_spec",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients)",
+]
+
+[[package]]
+name = "zgs_seal"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "ethereum-types 0.14.1",
+ "tiny-keccak",
+ "zgs_spec 0.1.0 (git+https://github.com/0glabs/0g-storage-node.git?branch=main)",
 ]
 
 [[package]]
 name = "zgs_spec"
 version = "0.1.0"
-source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#f9ce28690994d1e7c3116189e34879fb17345ac9"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+
+[[package]]
+name = "zgs_spec"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+
+[[package]]
+name = "zgs_version"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=expose-rpc-clients#84d96fada715b07bd9fd3535173d3e9513d06617"
+dependencies = [
+ "git-version",
+ "target_info",
+]
+
+[[package]]
+name = "zgs_version"
+version = "0.1.0"
+source = "git+https://github.com/0glabs/0g-storage-node.git?branch=main#8b410f2fc8a59728277328df4d303d19f6d7a218"
+dependencies = [
+ "git-version",
+ "target_info",
+]
 
 [[package]]
 name = "zip"
@@ -7452,7 +8605,7 @@ version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "760394e246e4c28189f19d488c058bf16f564016aefac5d32bb1f3b51d5e9261"
 dependencies = [
- "aes",
+ "aes 0.8.4",
  "byteorder",
  "bzip2",
  "constant_time_eq",

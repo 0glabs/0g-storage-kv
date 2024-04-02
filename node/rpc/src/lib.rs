@@ -4,9 +4,7 @@ extern crate tracing;
 mod config;
 mod error;
 mod kv_rpc_server;
-mod types;
-mod zgs_admin_client;
-mod zgs_rpc_client;
+pub mod types;
 
 use futures::channel::mpsc::Sender;
 pub use jsonrpsee::http_client::HttpClient;
@@ -18,10 +16,9 @@ use std::sync::Arc;
 use storage_with_stream::Store;
 use task_executor::ShutdownReason;
 use tokio::sync::RwLock;
-pub use zgs_admin_client::ZgsAdminClient;
-pub use zgs_rpc_client::ZgsRpcClient;
 
 pub use config::Config as RPCConfig;
+pub use kv_rpc_server::KeyValueRpcClient;
 
 /// A wrapper around all the items required to spawn the HTTP server.
 ///
