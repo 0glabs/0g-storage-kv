@@ -6,18 +6,18 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
 futures = "0.3.21"
 jsonrpsee = { version = "0.14.0", features = ["full"] }
 serde = { version = "1.0.137", features = ["derive"] }
 base64 = "0.13.0"
-shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
-task_executor = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
+task_executor = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
 tokio = { version = "1.19.2", features = ["macros", "sync"] }
 tracing = "0.1.35"
-merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
-merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
-zgs_rpc = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main", package = "rpc" }
+merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
+merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
+zgs_rpc = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep", package = "rpc" }
 futures-channel = "^0.3"
 ethereum-types = "0.14"
 storage_with_stream = { path = "../storage_with_stream" }

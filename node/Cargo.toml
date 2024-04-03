@@ -5,7 +5,7 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
-anyhow = { version = "=1.0.58", features = ["backtrace"] }
+anyhow = { version = "1.0.58", features = ["backtrace"] }
 clap = { version = "3.2.5", features = ["cargo"] }
 ctrlc = "3.2.2"
 error-chain = "0.12.4"
@@ -17,7 +17,7 @@ rpc = { path = "./rpc" }
 kv_types = { path = "./kv_types" }
 storage_with_stream = { path = "./storage_with_stream" }
 stream = { path = "./stream" }
-task_executor = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+task_executor = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
 tokio = { version = "1.19.2", features = ["full"] }
 tokio-stream = { version = "0.1.9", features = ["sync"] }
 toml = "0.5.9"

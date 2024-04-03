@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = { version = "=1.0.58", features = ["backtrace"] }
-append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+anyhow = { version = "1.0.58", features = ["backtrace"] }
+append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
 eth2_ssz = "0.4.0"
 eth2_ssz_derive = "0.3.0"
 ethereum-types = "0.14"
@@ -13,11 +13,11 @@ hex = "0.4.3"
 kvdb = "0.13.0"
 kvdb-memorydb = "0.13.0"
 kvdb-rocksdb = "0.19.0"
-merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
-merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
-storage = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
+merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
+storage = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
 rayon = "1.5.3"
-shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
 kv_types = { path = "../kv_types" }
 tracing = "0.1.35"
 typenum = "1.15.0"
