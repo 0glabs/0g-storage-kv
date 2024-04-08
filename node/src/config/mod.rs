@@ -20,7 +20,7 @@ build_config! {
     (rate_limit_retries, (u32), 100)
     (timeout_retries, (u32), 100)
     (initial_backoff, (u64), 500)
-    (recover_query_delay, (u64), 50)
+    (recover_query_delay, (u64), 500)
 
     (default_finalized_block_count, (u64), 100)
     (remove_finalized_block_interval_minutes, (u64), 30)
