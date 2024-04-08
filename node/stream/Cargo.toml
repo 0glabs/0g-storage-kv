@@ -7,21 +7,21 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.58", features = ["backtrace"] }
-append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
+append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 async-trait = "0.1.56"
 ethereum-types = "0.14"
 futures = "0.3.21"
 jsonrpsee = { version = "0.14.0", features = ["full"] }
-shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
+shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 kv_types = { path = "../kv_types" }
-task_executor = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
+task_executor = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 tokio = "1.19.2"
 ethers = { version = "^2", features = ["ws"] }
 serde_json = "1.0.82"
 storage_with_stream = { path = "../storage_with_stream" }
 rpc = {path = "../rpc"}
 zgs_rpc = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "expose-rpc-clients", package = "rpc" }
-contract-interface = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "update-dep" }
+contract-interface = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
 rusqlite = { version = "0.28.0", features = ["bundled"] }
 tracing = "0.1.35"
 eth2_ssz = "0.4.0"
