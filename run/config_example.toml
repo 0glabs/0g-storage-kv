@@ -5,8 +5,8 @@ db_dir = "db"
 kv_db_dir = "kv.DB"
 
 rpc_enabled = true
-rpc_listen_address = "127.0.0.1:6789"
-zgs_node_urls = "http://127.0.0.1:5678"
+rpc_listen_address = "0.0.0.0:6789"
+zgs_node_urls = "http://localhost:5678"
 
 log_config_file = "log_config"
 
