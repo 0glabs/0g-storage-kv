@@ -11,6 +11,7 @@ use std::{
 };
 use zgs_rpc::ZgsAdminRpcClient;
 use zgs_rpc::ZgsRPCClient;
+use zgs_storage::config::ShardConfig;
 
 use storage_with_stream::{log_store::log_manager::ENTRY_SIZE, Store};
 use task_executor::TaskExecutor;
@@ -27,13 +28,13 @@ const MAX_RETRY: usize = 5;
 pub struct StreamDataFetcher {
     config: StreamConfig,
     store: Arc<RwLock<dyn Store>>,
-    clients: Vec<HttpClient>,
+    clients: Arc<Vec<(HttpClient, ShardConfig)>>,
     admin_client: Option<HttpClient>,
     task_executor: TaskExecutor,
 }
 
 async fn download_with_proof(
-    clients: Vec<HttpClient>,
+    clients: Arc<Vec<(HttpClient, ShardConfig)>>,
     client_index: usize,
     tx: Arc<KVTransaction>,
     start_index: usize,
@@ -42,17 +43,32 @@ async fn download_with_proof(
     sender: UnboundedSender<Result<(), (usize, usize, bool)>>,
 ) {
     let mut fail_cnt = 0;
+    let mut index = client_index;
     while fail_cnt < clients.len() {
-        let index = (client_index + fail_cnt) % clients.len();
+        // find next
+        let seg_index = start_index / ENTRIES_PER_SEGMENT;
+        let mut try_cnt = 0;
+        while seg_index % clients[index].1.num_shard != clients[index].1.shard_id {
+            index = (index + 1) % clients.len();
+            try_cnt += 1;
+            if try_cnt >= clients.len() {
+                error!(
+                    "there is no storage nodes hold segment index {:?} of file with root {:?}",
+                    seg_index, tx.transaction.data_merkle_root
+                );
+                if let Err(e) = sender.send(Err((start_index, end_index, false))) {
+                    error!("send error: {:?}", e);
+                }
+                return;
+            }
+        }
         debug!(
             "download_with_proof for tx_seq: {}, start_index: {}, end_index {} from client #{}",
             tx.transaction.seq, start_index, end_index, index
         );
         match clients[index]
-            .download_segment_with_proof(
-                tx.transaction.data_merkle_root,
-                start_index / ENTRIES_PER_SEGMENT,
-            )
+            .0
+            .download_segment_with_proof(tx.transaction.data_merkle_root, seg_index)
             .await
         {
             Ok(Some(segment)) => {
@@ -141,10 +157,15 @@ impl StreamDataFetcher {
         admin_client: Option<HttpClient>,
         task_executor: TaskExecutor,
     ) -> Result<Self> {
+        let mut clients_with_shard_config = vec![];
+        for client in clients.into_iter() {
+            let shard_config = client.get_shard_config().await?;
+            clients_with_shard_config.push((client, shard_config));
+        }
         Ok(Self {
             config,
             store,
-            clients,
+            clients: Arc::new(clients_with_shard_config),
             admin_client,
             task_executor,
         })
