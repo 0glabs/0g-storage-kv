@@ -5,7 +5,10 @@ ZGS_CONFIG = {
     "confirmation_block_count": 1,
 }
 
-KV_CONFIG = dict(log_config_file="log_config")
+KV_CONFIG = {
+    "log_config_file": "log_config",
+    "confirmation_block_count": 1,
+}
 
 BSC_CONFIG = dict(
     NetworkId=1000,

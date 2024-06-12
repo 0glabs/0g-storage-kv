@@ -29,10 +29,10 @@ def bytes_to_entries(size_bytes):
         return size_bytes // ENTRY_SIZE + 1
 
 
-def create_submission(data):
+def create_submission(data, tags=b""):
     submission = []
     submission.append(len(data))
-    submission.append(b"")
+    submission.append(tags)
     submission.append([])
 
     offset = 0

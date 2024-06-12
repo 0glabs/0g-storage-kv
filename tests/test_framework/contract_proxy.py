@@ -49,14 +49,14 @@ class ContractProxy:
 
 class FlowContractProxy(ContractProxy):
     def submit(
-        self, submission_nodes, node_idx=0, tx_prarams=None, parent_hash=None,
+        self, submission_nodes, node_idx=0, tx_params=None, parent_hash=None,
     ):
         assert node_idx < len(self.blockchain_nodes)
 
         combined_tx_prarams = copy(TX_PARAMS)
 
-        if tx_prarams is not None:
-            combined_tx_prarams.update(tx_prarams)
+        if tx_params is not None:
+            combined_tx_prarams.update(tx_params)
             
 
         contract = self._get_contract(node_idx)
