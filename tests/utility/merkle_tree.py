@@ -1,6 +1,7 @@
 import sha3
 
 from math import log2
+from utility.spec import ENTRY_SIZE
 
 
 def decompose(num):
@@ -154,6 +155,28 @@ class MerkleTree:
         leaf = Leaf.from_data(data, self.hasher)
         self.add_leaf(leaf)
 
+    @classmethod
+    def from_data_list(cls, data, encoding="utf-8"):
+        tree = cls(encoding)
+
+        n = len(data)
+        if n < ENTRY_SIZE or (n & (n - 1)) != 0:
+            raise Exception("Input length is not power of 2")
+        
+        leaves = [Leaf.from_data(data[i:i + ENTRY_SIZE], tree.hasher) for i in range(0, n, ENTRY_SIZE)]
+        tree.__leaves = leaves
+
+        nodes = leaves
+        while len(nodes) > 1:
+            next_nodes = []
+            for i in range(0, len(nodes), 2):
+                next_nodes.append(Node.from_children(nodes[i], nodes[i+1], tree.hasher))
+
+            nodes = next_nodes
+
+        tree.__root = nodes[0]
+        return tree
+
     def add_leaf(self, leaf):
         if self:
             subroot = self.get_last_subroot()
@@ -218,7 +241,7 @@ class MerkleTree:
 
         current = self.__leaves[i]
         while current != self.__root:
-            if current.parent is not None and current.parent.left == current:
+            if current.parent != None and current.parent.left == current:
                 # add right
                 proof["lemma"].append(
                     add_0x_prefix(self.decode_value(current.parent.right.value))

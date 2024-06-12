@@ -3,11 +3,7 @@ import base64
 from eth_utils import encode_hex, decode_hex
 from math import log2
 from utility.merkle_tree import add_0x_prefix, Leaf, MerkleTree
-
-
-ENTRY_SIZE = 256
-PORA_CHUNK_SIZE = 1024
-
+from utility.spec import ENTRY_SIZE, PORA_CHUNK_SIZE
 
 def log2_pow2(n):
     return int(log2(((n ^ (n - 1)) >> 1) + 1))
@@ -33,10 +29,10 @@ def bytes_to_entries(size_bytes):
         return size_bytes // ENTRY_SIZE + 1
 
 
-def create_submission(data, tags=b""):
+def create_submission(data):
     submission = []
     submission.append(len(data))
-    submission.append(tags)
+    submission.append(b"")
     submission.append([])
 
     offset = 0
@@ -98,9 +94,8 @@ def create_node(data, offset, chunks):
 
 def create_segment_node(data, offset, batch, size):
     tree = MerkleTree()
-    i = offset
     n = len(data)
-    while i < offset + size:
+    for i in range(offset, offset + size, batch):
         start = i
         end = min(offset + size, i + batch)
 
@@ -111,21 +106,34 @@ def create_segment_node(data, offset, batch, size):
         else:
             tree.add_leaf(Leaf(segment_root(data[start:end])))
 
-        i += batch
 
     return tree.get_root_hash()
 
 
+
+segment_root_cached_chunks = None
+segment_root_cached_output = None
 def segment_root(chunks):
+    global segment_root_cached_chunks, segment_root_cached_output
+
+    if segment_root_cached_chunks == chunks:
+        return segment_root_cached_output
+
+
     data_len = len(chunks)
     if data_len == 0:
         return b"\x00" * 32
 
+
     tree = MerkleTree()
     for i in range(0, data_len, ENTRY_SIZE):
         tree.encrypt(chunks[i : i + ENTRY_SIZE])
+    
+    digest = tree.get_root_hash()
 
-    return tree.get_root_hash()
+    segment_root_cached_chunks = chunks
+    segment_root_cached_output = digest
+    return digest
 
 
 def generate_merkle_tree(data):
@@ -186,6 +194,13 @@ def generate_merkle_tree_by_batch(data):
 
 
 def submit_data(client, data):
+    segments = data_to_segments(data)
+    for segment in segments:
+        client.zgs_upload_segment(segment)
+    return segments
+
+
+def data_to_segments(data):
     tree, root_hash = generate_merkle_tree_by_batch(data)
     chunks = bytes_to_entries(len(data))
 
@@ -215,7 +230,6 @@ def submit_data(client, data):
             "fileSize": len(data),
         }
 
-        client.zgs_upload_segment(segment)
         segments.append(segment)
         idx += 1
 

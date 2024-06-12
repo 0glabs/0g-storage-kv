@@ -4,22 +4,25 @@ import logging
 import os
 import pdb
 import random
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
 import traceback
+from pathlib import Path
 
 from eth_utils import encode_hex
 from test_framework.bsc_node import BSCNode
-from test_framework.contract_proxy import FlowContractProxy, MineContractProxy
+from test_framework.contract_proxy import FlowContractProxy, MineContractProxy, IRewardContractProxy
 from test_framework.zgs_node import ZgsNode
 from test_framework.blockchain_node import BlockChainNodeType
-from test_framework.conflux_node import ConfluxNode, connect_sample_nodes, sync_blocks
+from test_framework.conflux_node import ConfluxNode, connect_sample_nodes
+from test_framework.zg_node import ZGNode, zg_node_init_genesis
 from test_framework.kv_node import KVNode
-
 from utility.utils import PortMin, is_windows_platform, wait_until
+from utility.build_binary import build_cli
 
 __file_path__ = os.path.dirname(os.path.realpath(__file__))
 
@@ -34,21 +37,25 @@ TEST_EXIT_FAILED = 1
 
 
 class TestFramework:
-    def __init__(
-        self,
-        blockchain_node_type=BlockChainNodeType.Conflux,
-        blockchain_node_configs={},
-    ):
+    def __init__(self, blockchain_node_type=BlockChainNodeType.ZG):
+        if "http_proxy" in os.environ:
+            del os.environ["http_proxy"]
+
         self.num_blockchain_nodes = None
         self.num_nodes = None
         self.blockchain_nodes = []
         self.nodes = []
         self.kv_nodes = []
         self.contract = None
-        self.blockchain_node_configs = blockchain_node_configs
+        self.blockchain_node_configs = {}
         self.zgs_node_configs = {}
         self.blockchain_node_type = blockchain_node_type
+        self.block_time = blockchain_node_type.block_time()
+        self.enable_market = False
+        self.mine_period = 100
+        self.launch_wait_seconds = 1
 
+        # Set default binary path
         binary_ext = ".exe" if is_windows_platform() else ""
         tests_dir = os.path.dirname(__file_path__)
         root_dir = os.path.dirname(tests_dir)
@@ -58,21 +65,25 @@ class TestFramework:
         self.__default_geth_binary__ = os.path.join(
             tests_dir, "tmp", "geth" + binary_ext
         )
+        self.__default_zg_binary__ = os.path.join(
+            tests_dir, "tmp", "0gchaind" + binary_ext
+        )
+
         self.__default_zgs_node_binary__ = os.path.join(
             root_dir, "0g-storage-node", "target", "release", "zgs_node" + binary_ext
         )
         self.__default_zgs_cli_binary__ = os.path.join(
-            __file_path__,
-            root_dir,
-            "0g-storage-node",
-            "target",
-            "0g-storage-client" + binary_ext,
+            tests_dir, "tmp", "0g-storage-client"  + binary_ext
         )
         self.__default_zgs_kv_binary__ = os.path.join(
             __file_path__, root_dir, "target", "release", "zgs_kv" + binary_ext
         )
 
     def __setup_blockchain_node(self):
+        if self.blockchain_node_type == BlockChainNodeType.ZG:
+            zg_node_init_genesis(self.blockchain_binary, self.root_dir, self.num_blockchain_nodes)
+            self.log.info("0gchain genesis initialized for %s nodes" % self.num_blockchain_nodes)
+
         for i in range(self.num_blockchain_nodes):
             if i in self.blockchain_node_configs:
                 updated_config = self.blockchain_node_configs[i]
@@ -92,6 +103,15 @@ class TestFramework:
                 )
             elif self.blockchain_node_type == BlockChainNodeType.Conflux:
                 node = ConfluxNode(
+                    i,
+                    self.root_dir,
+                    self.blockchain_binary,
+                    updated_config,
+                    self.contract_path,
+                    self.log,
+                )
+            elif self.blockchain_node_type == BlockChainNodeType.ZG:
+                node = ZGNode(
                     i,
                     self.root_dir,
                     self.blockchain_binary,
@@ -145,11 +165,23 @@ class TestFramework:
             # make nodes full connected
             if self.num_blockchain_nodes > 1:
                 connect_sample_nodes(self.blockchain_nodes, self.log)
-                sync_blocks(self.blockchain_nodes)
+                # The default is `dev` mode with auto mining, so it's not guaranteed that blocks
+                # can be synced in time for `sync_blocks` to pass.
+                # sync_blocks(self.blockchain_nodes)
+        elif self.blockchain_node_type == BlockChainNodeType.ZG:
+            # wait for the first block
+            self.log.debug("Wait 3 seconds for 0gchain node to generate first block")
+            time.sleep(3)
+            for node in self.blockchain_nodes:
+                wait_until(lambda: node.net_peerCount() == self.num_blockchain_nodes - 1)
+                wait_until(lambda: node.eth_blockNumber() is not None)
+                wait_until(lambda: int(node.eth_blockNumber(), 16) > 0)
 
-        contract, tx_hash, mine_contract = self.blockchain_nodes[0].setup_contract()
+        contract, tx_hash, mine_contract, reward_contract = self.blockchain_nodes[0].setup_contract(self.enable_market, self.mine_period)
         self.contract = FlowContractProxy(contract, self.blockchain_nodes)
         self.mine_contract = MineContractProxy(mine_contract, self.blockchain_nodes)
+        self.reward_contract = IRewardContractProxy(reward_contract, self.blockchain_nodes)
+
 
         for node in self.blockchain_nodes[1:]:
             node.wait_for_transaction(tx_hash)
@@ -180,7 +212,9 @@ class TestFramework:
                 time.sleep(1)
             node.start()
 
-        time.sleep(1)
+        self.log.info("Wait the zgs_node launch for %d seconds", self.launch_wait_seconds)
+        time.sleep(self.launch_wait_seconds)
+        
         for node in self.nodes:
             node.wait_for_rpc_connection()
 
@@ -200,8 +234,15 @@ class TestFramework:
         )
 
         parser.add_argument(
-            "--zgs-binary",
-            dest="zgs",
+            "--zg-binary",
+            dest="zg",
+            default=self.__default_zg_binary__,
+            type=str,
+        )
+
+        parser.add_argument(
+            "--zerog-storage-binary",
+            dest="zerog_storage",
             default=os.getenv(
                 "ZGS",
                 default=self.__default_zgs_node_binary__,
@@ -243,6 +284,10 @@ class TestFramework:
 
         parser.add_argument(
             "--tmpdir", dest="tmpdir", help="Root directory for datadirs"
+        )
+
+        parser.add_argument(
+            "--devdir", dest="devdir", help="A softlink point to the last run"
         )
 
         parser.add_argument(
@@ -293,6 +338,15 @@ class TestFramework:
         self.log.addHandler(fh)
         self.log.addHandler(ch)
 
+    def _check_cli_binary(self):
+        if Path(self.cli_binary).absolute() == Path(self.__default_zgs_cli_binary__).absolute() and not os.path.exists(self.cli_binary):
+            dir = Path(self.cli_binary).parent.absolute()
+            build_cli(dir)
+        
+        assert os.path.exists(self.cli_binary), (
+            "zgs CLI binary not found: %s" % self.cli_binary
+        )
+
     def _upload_file_use_cli(
         self,
         blockchain_node_rpc_url,
@@ -301,9 +355,8 @@ class TestFramework:
         ionion_node_rpc_url,
         file_to_upload,
     ):
-        assert os.path.exists(self.cli_binary), (
-            "zgs CLI binary not found: %s" % self.cli_binary
-        )
+        self._check_cli_binary()
+        
         upload_args = [
             self.cli_binary,
             "upload",
@@ -317,27 +370,42 @@ class TestFramework:
             ionion_node_rpc_url,
             "--log-level",
             "debug",
+            "--gas-limit",
+            "10000000",
             "--file",
         ]
 
-        proc = subprocess.Popen(
-            upload_args + [file_to_upload.name],
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        proc.wait()
+        output = tempfile.NamedTemporaryFile(dir=self.root_dir, delete=False, prefix="zgs_client_output_")
+        output_name = output.name
+        output_fileno = output.fileno()
 
-        root = None
-        for line in proc.stdout.readlines():
-            self.log.debug("line: %s", line)
-            if "root" in line:
-                index = line.find("root=")
-                root = line[index + 5 : -1]
-                self.log.info("root: %s", root)
+        try:
+            proc = subprocess.Popen(
+                upload_args + [file_to_upload.name],
+                text=True,
+                stdout=output_fileno,
+                stderr=output_fileno,
+            )
+            
+            return_code = proc.wait(timeout=60)
 
-        assert proc.returncode == 0, "%s upload file failed" % self.cli_binary
-        self.log.info("file uploaded")
+            output.seek(0)
+            lines = output.readlines()
+            for line in lines:
+                line = line.decode("utf-8")
+                self.log.debug("line: %s", line)
+                if "root" in line:
+                    filtered_line = re.sub(r'\x1b\[([0-9,A-Z]{1,2}(;[0-9]{1,2})?(;[0-9]{3})?)?[m|K]?', '', line)
+                    index = filtered_line.find("root=")
+                    if index > 0:
+                        root = filtered_line[index + 5 : index + 5 + 66]
+        except Exception as ex:
+            self.log.error("Failed to upload file via CLI tool, output: %s", output_name)
+            raise ex
+        finally:
+            output.close()
+
+        assert return_code == 0, "%s upload file failed, output: %s, log: %s" % (self.cli_binary, output_name, lines)
 
         return root
 
@@ -368,10 +436,7 @@ class TestFramework:
         node.wait_for_rpc_connection()
 
     def stop_nodes(self):
-        for node in self.kv_nodes:
-            node.stop()
-
-        # stop ionion nodes first
+        # stop storage nodes first
         for node in self.nodes:
             node.stop()
 
@@ -381,8 +446,10 @@ class TestFramework:
     def stop_kv_node(self, index):
         self.kv_nodes[index].stop()
 
-    def stop_storage_node(self, index):
+    def stop_storage_node(self, index, clean=False):
         self.nodes[index].stop()
+        if clean:
+            self.nodes[index].clean_data()
 
     def start_kv_node(self, index):
         self.kv_nodes[index].start()
@@ -413,15 +480,32 @@ class TestFramework:
         self.__start_logging()
         self.log.info("Root dir: %s", self.root_dir)
 
-        if self.blockchain_node_type == BlockChainNodeType.Conflux:
-            self.blockchain_binary = self.options.conflux
-        else:
-            self.blockchain_binary = self.options.bsc
+        if self.options.devdir:
+            dst = self.options.devdir
 
-        self.zgs_binary = self.options.zgs
-        self.cli_binary = self.options.cli
-        self.kv_binary = self.options.zgs_kv
-        self.contract_path = self.options.contract
+            if os.path.islink(dst):
+                os.remove(dst)
+            elif os.path.isdir(dst): 
+                shutil.rmtree(dst)
+            elif os.path.exists(dst):
+                os.remove(dst)
+
+            os.symlink(self.options.tmpdir, dst)
+            self.log.info("Symlink: %s", Path(dst).absolute())
+
+        if self.blockchain_node_type == BlockChainNodeType.Conflux:
+            self.blockchain_binary = os.path.abspath(self.options.conflux)
+        elif self.blockchain_node_type == BlockChainNodeType.BSC:
+            self.blockchain_binary = os.path.abspath(self.options.bsc)
+        elif self.blockchain_node_type == BlockChainNodeType.ZG:
+            self.blockchain_binary = os.path.abspath(self.options.zg)
+        else:
+            raise NotImplementedError
+
+        self.zgs_binary = os.path.abspath(self.options.zerog_storage)
+        self.cli_binary = os.path.abspath(self.options.cli)
+        self.contract_path = os.path.abspath(self.options.contract)
+        self.kv_binary = os.path.abspath(self.options.zgs_kv)
 
         assert os.path.exists(self.contract_path), (
             "%s should be exist" % self.contract_path
@@ -434,6 +518,7 @@ class TestFramework:
         try:
             self.setup_params()
             self.setup_nodes()
+            self.log.debug("========== start to run tests ==========")
             self.run_test()
             success = TestStatus.PASSED
         except AssertionError as e:
@@ -460,14 +545,13 @@ class TestFramework:
 
         self.stop_nodes()
 
-        if success == TestStatus.PASSED:
-            self.log.info("Test success")
-            shutil.rmtree(self.root_dir)
-
         handlers = self.log.handlers[:]
         for handler in handlers:
             self.log.removeHandler(handler)
             handler.close()
         logging.shutdown()
+
+        if success == TestStatus.PASSED:
+            shutil.rmtree(self.root_dir)
 
         sys.exit(exit_code)
