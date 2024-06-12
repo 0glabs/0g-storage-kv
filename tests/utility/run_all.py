@@ -10,7 +10,7 @@ from utility.build_binary import build_conflux, build_bsc, build_zg, build_cli
 
 DEFAULT_PORT_MIN = 11000
 DEFAULT_PORT_MAX = 65535
-DEFAULT_PORT_RANGE = 500
+DEFAULT_PORT_RANGE = 600
 
 def print_testcase_result(color, glyph, script, start_time):
     print(color[1] + glyph + " Testcase " + script + "\telapsed: " + str(int(time.time() - start_time)) + " seconds" + color[0], flush=True)
