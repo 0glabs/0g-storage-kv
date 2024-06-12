@@ -124,6 +124,4 @@ class KVRecoveryTest(TestFramework):
 
 
 if __name__ == "__main__":
-    KVRecoveryTest(
-        blockchain_node_configs=dict([(0, dict(mode="dev", dev_block_interval_ms=50))])
-    ).main()
+    KVRecoveryTest().main()

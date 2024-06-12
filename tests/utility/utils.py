@@ -2,9 +2,9 @@ import base64
 import inspect
 import os
 import platform
-import sha3
 import rtoml
 import time
+import sha3
 
 from config.node_config import ZGS_CONFIG
 from eth_utils import encode_hex
@@ -38,10 +38,11 @@ def blockchain_rpc_port(n):
 def blockchain_rpc_port_core(n):
     return PortMin.n + 4 * MAX_NODES + n
 
-
 def kv_rpc_port(n):
     return PortMin.n + 5 * MAX_NODES + n
 
+def arrange_port(category: int, node_index: int) -> int:
+    return PortMin.n + (100 + category) * MAX_NODES + node_index
 
 def wait_until(predicate, *, attempts=float("inf"), timeout=float("inf"), lock=None):
     if attempts == float("inf") and timeout == float("inf"):
@@ -133,3 +134,12 @@ def assert_greater_than(thing1, thing2):
 def assert_greater_than_or_equal(thing1, thing2):
     if thing1 < thing2:
         raise AssertionError("%s < %s" % (str(thing1), str(thing2)))
+
+# 14900K has the performance point 100 
+def estimate_st_performance():
+    hasher = sha3.keccak_256()
+    input =  b"\xcc" * (1<<26)
+    start_time = time.perf_counter()
+    hasher.update(input)
+    digest = hasher.hexdigest()
+    return 10 / (time.perf_counter() - start_time)

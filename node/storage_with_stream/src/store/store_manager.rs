@@ -37,10 +37,6 @@ impl LogStoreChunkWrite for StoreManager {
         self.log_store.put_chunks(tx_seq, chunks)
     }
 
-    fn remove_all_chunks(&self, tx_seq: u64) -> crate::error::Result<()> {
-        self.log_store.remove_all_chunks(tx_seq)
-    }
-
     fn put_chunks_with_tx_hash(
         &mut self,
         tx_seq: u64,
@@ -50,6 +46,10 @@ impl LogStoreChunkWrite for StoreManager {
     ) -> storage::error::Result<bool> {
         self.log_store
             .put_chunks_with_tx_hash(tx_seq, tx_hash, chunks, maybe_file_proof)
+    }
+
+    fn remove_chunks_batch(&self, batch_list: &[u64]) -> storage::error::Result<()> {
+        self.log_store.remove_chunks_batch(batch_list)
     }
 }
 

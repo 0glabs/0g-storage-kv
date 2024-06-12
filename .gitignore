@@ -18,3 +18,4 @@ tests/**/__pycache__
 tests/utility/geth
 tests/utility/conflux
 tests/tmp/**
+0gchain-init-genesis-mac.sh

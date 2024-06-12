@@ -1,4 +1,3 @@
-import json
 import os
 import subprocess
 import tempfile
@@ -14,14 +13,12 @@ from config.node_config import (
     GENESIS_PRIV_KEY1,
     TX_PARAMS,
     MINER_ID,
-    NO_MERKLE_PROOF_FLAG,
-    NO_SEAL_FLAG,
-    TX_PARAMS1,
 )
 from utility.simple_rpc_proxy import SimpleRpcProxy
 from utility.utils import (
     initialize_config,
     wait_until,
+    estimate_st_performance
 )
 from test_framework.contracts import load_contract_metadata
 
@@ -30,7 +27,15 @@ from test_framework.contracts import load_contract_metadata
 class BlockChainNodeType(Enum):
     Conflux = 0
     BSC = 1
+    ZG = 2
 
+    def block_time(self):
+        if self == BlockChainNodeType.Conflux:
+            return 0.5
+        elif self == BlockChainNodeType.BSC:
+            return 25 / estimate_st_performance()
+        else:
+            return 3.0
 
 @unique
 class NodeType(Enum):
@@ -47,7 +52,7 @@ class TestNode:
     def __init__(
         self, node_type, index, data_dir, rpc_url, binary, config, log, rpc_timeout=10
     ):
-        assert os.path.exists(binary), "binary not found: %s" % binary
+        assert os.path.exists(binary), ("Binary not found: %s" % binary)
         self.node_type = node_type
         self.index = index
         self.data_dir = data_dir
@@ -153,7 +158,7 @@ class TestNode:
         else:
             self.process.terminate()
         if wait:
-            self.wait_until_stopped()
+            self.wait_until_stopped(close_stdout_stderr=False)
         # Check that stderr is as expected
         self.stderr.seek(0)
         stderr = self.stderr.read().decode("utf-8").strip()
@@ -184,7 +189,7 @@ class TestNode:
             self.stderr.close()
             self.stderr = None
 
-    def is_node_stopped(self):
+    def __is_node_stopped__(self):
         """Checks whether the node has stopped.
 
         Returns True if the node has stopped. False otherwise.
@@ -206,8 +211,10 @@ class TestNode:
         self.return_code = return_code
         return True
 
-    def wait_until_stopped(self, timeout=20):
-        wait_until(self.is_node_stopped, timeout=timeout)
+    def wait_until_stopped(self, close_stdout_stderr=True, timeout=20):
+        wait_until(self.__is_node_stopped__, timeout=timeout)
+        if close_stdout_stderr:
+            self.__safe_close_stdout_stderr__()
 
 
 class BlockchainNode(TestNode):
@@ -247,7 +254,7 @@ class BlockchainNode(TestNode):
     def wait_for_transaction_receipt(self, w3, tx_hash, timeout=120, parent_hash=None):
         return w3.eth.wait_for_transaction_receipt(tx_hash, timeout)
 
-    def setup_contract(self):
+    def setup_contract(self, enable_market, mine_period):
         w3 = Web3(HTTPProvider(self.rpc_url))
 
         account1 = w3.eth.account.from_key(GENESIS_PRIV_KEY)
@@ -261,53 +268,84 @@ class BlockchainNode(TestNode):
         def deploy_contract(name, args=None):
             if args is None:
                 args = []
-            contract_interface = load_contract_metadata(
-                base_path=self.contract_path, name=name
-            )
+            contract_interface = load_contract_metadata(base_path=self.contract_path, name=name)
             contract = w3.eth.contract(
                 abi=contract_interface["abi"],
                 bytecode=contract_interface["bytecode"],
             )
-            tx_hash = contract.constructor(*args).transact(TX_PARAMS)
+            
+            tx_params = TX_PARAMS.copy()
+            del tx_params["gas"]
+            tx_hash = contract.constructor(*args).transact(tx_params)
             tx_receipt = self.wait_for_transaction_receipt(w3, tx_hash)
             contract = w3.eth.contract(
                 address=tx_receipt.contractAddress,
                 abi=contract_interface["abi"],
             )
             return contract, tx_hash
-
+        
         def predict_contract_address(offset):
             nonce = w3.eth.get_transaction_count(account1.address)
             rlp_encoded = rlp.encode([decode_hex(account1.address), nonce + offset])
             contract_address_bytes = keccak(rlp_encoded)[-20:]
-            contract_address = "0x" + contract_address_bytes.hex()
+            contract_address = '0x' + contract_address_bytes.hex()           
             return Web3.to_checksum_address(contract_address)
+        
+        def deploy_no_market():
+            flowAddress = predict_contract_address(1)
+            mineAddress = predict_contract_address(2)
 
-        flowAddress = predict_contract_address(1)
-        mineAddress = predict_contract_address(2)
+            ZERO = "0x0000000000000000000000000000000000000000"
 
-        ZERO = "0x0000000000000000000000000000000000000000"
+            self.log.debug("Start deploy contracts")
+            book, _ = deploy_contract("AddressBook", [flowAddress, ZERO, ZERO, mineAddress]);
+            self.log.debug("AddressBook deployed")
 
-        self.log.debug("Start deploy contracts")
-        book, _ = deploy_contract("AddressBook", [flowAddress, ZERO, ZERO, mineAddress])
-        self.log.debug("AddressBook deployed")
-        flow_contract, flow_contract_hash = deploy_contract(
-            "Flow", [book.address, 100, 0]
-        )
-        self.log.debug("Flow deployed")
-        mine_contract, _ = deploy_contract(
-            "PoraMineTest",
-            [book.address, 3],
-        )
-        self.log.debug("Mine deployed")
-        self.log.info("All contracts deployed")
+            flow_contract, flow_contract_hash = deploy_contract("Flow", [book.address, mine_period, 0])
+            self.log.debug("Flow deployed")
 
-        tx_hash = mine_contract.functions.setMiner(decode_hex(MINER_ID)).transact(
-            TX_PARAMS
-        )
-        self.wait_for_transaction_receipt(w3, tx_hash)
+            mine_contract, _ = deploy_contract("PoraMineTest", [book.address, 0])
+            self.log.debug("Mine deployed")
+            self.log.info("All contracts deployed")
 
-        return flow_contract, flow_contract_hash, mine_contract
+            # tx_hash = mine_contract.functions.setMiner(decode_hex(MINER_ID)).transact(TX_PARAMS)
+            # self.wait_for_transaction_receipt(w3, tx_hash)
+            
+            dummy_reward_contract = w3.eth.contract(
+                address = book.functions.reward().call(),
+                abi=load_contract_metadata(base_path=self.contract_path, name="IReward")["abi"],
+            )
+
+            return flow_contract, flow_contract_hash, mine_contract, dummy_reward_contract
+        
+        def deploy_with_market():
+            mineAddress = predict_contract_address(1)
+            marketAddress = predict_contract_address(2)
+            rewardAddress = predict_contract_address(3)
+            flowAddress = predict_contract_address(4)
+
+            LIFETIME_MONTH = 1
+
+            self.log.debug("Start deploy contracts")
+            book, _ = deploy_contract("AddressBook", [flowAddress, marketAddress, rewardAddress, mineAddress]);
+            self.log.debug("AddressBook deployed")
+
+            mine_contract, _ = deploy_contract("PoraMineTest", [book.address, 0])
+            deploy_contract("FixedPrice", [book.address, LIFETIME_MONTH])
+            reward_contract, _ =deploy_contract("OnePoolReward", [book.address, LIFETIME_MONTH])
+            flow_contract, flow_contract_hash = deploy_contract("FixedPriceFlow", [book.address, mine_period, 0])
+
+            self.log.info("All contracts deployed")
+
+            # tx_hash = mine_contract.functions.setMiner(decode_hex(MINER_ID)).transact(TX_PARAMS)
+            # self.wait_for_transaction_receipt(w3, tx_hash)
+
+            return flow_contract, flow_contract_hash, mine_contract, reward_contract
+        
+        if enable_market:
+            return deploy_with_market()
+        else:
+            return deploy_no_market()
 
     def get_contract(self, contract_address):
         w3 = Web3(HTTPProvider(self.rpc_url))
@@ -326,4 +364,4 @@ class BlockchainNode(TestNode):
         w3.eth.wait_for_transaction_receipt(tx_hash)
 
     def start(self):
-        super().start(self.blockchain_node_type == BlockChainNodeType.BSC)
+        super().start(self.blockchain_node_type == BlockChainNodeType.BSC or self.blockchain_node_type == BlockChainNodeType.ZG)

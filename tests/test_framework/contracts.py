@@ -11,3 +11,4 @@ def load_contract_metadata(base_path: str, name: str):
         return json.loads(open(found_file, "r").read())
     except StopIteration:
         raise Exception(f"Cannot found contract {name}'s metadata")
+
