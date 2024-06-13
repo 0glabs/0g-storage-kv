@@ -28,13 +28,16 @@ const MAX_RETRY: usize = 5;
 pub struct StreamDataFetcher {
     config: StreamConfig,
     store: Arc<RwLock<dyn Store>>,
-    clients: Arc<Vec<(HttpClient, ShardConfig)>>,
+    clients: Arc<Vec<HttpClient>>,
+    shard_configs: Arc<RwLock<Vec<Option<ShardConfig>>>>,
     admin_client: Option<HttpClient>,
     task_executor: TaskExecutor,
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn download_with_proof(
-    clients: Arc<Vec<(HttpClient, ShardConfig)>>,
+    clients: Arc<Vec<HttpClient>>,
+    shard_configs: Arc<RwLock<Vec<Option<ShardConfig>>>>,
     client_index: usize,
     tx: Arc<KVTransaction>,
     start_index: usize,
@@ -48,7 +51,13 @@ async fn download_with_proof(
         // find next
         let seg_index = start_index / ENTRIES_PER_SEGMENT;
         let mut try_cnt = 0;
-        while seg_index % clients[index].1.num_shard != clients[index].1.shard_id {
+        loop {
+            let configs = shard_configs.read().await;
+            if let Some(shard_config) = configs[index] {
+                if seg_index % shard_config.num_shard == shard_config.shard_id {
+                    break;
+                }
+            }
             index = (index + 1) % clients.len();
             try_cnt += 1;
             if try_cnt >= clients.len() {
@@ -67,7 +76,6 @@ async fn download_with_proof(
             tx.transaction.seq, start_index, end_index, index
         );
         match clients[index]
-            .0
             .download_segment_with_proof(tx.transaction.data_merkle_root, seg_index)
             .await
         {
@@ -149,6 +157,27 @@ async fn download_with_proof(
     }
 }
 
+async fn poll_shard_configs(
+    clients: Vec<HttpClient>,
+    shard_configs: Arc<RwLock<Vec<Option<ShardConfig>>>>,
+) {
+    let n = clients.len();
+    loop {
+        for i in 0..n {
+            match clients[i].get_shard_config().await {
+                Ok(shard_config) => {
+                    let mut configs = shard_configs.write().await;
+                    configs[i] = Some(shard_config);
+                }
+                Err(e) => {
+                    debug!("fetch shard config from client #{:?} failed: {:?}", i, e);
+                }
+            }
+        }
+        tokio::time::sleep(Duration::from_secs(60)).await;
+    }
+}
+
 impl StreamDataFetcher {
     pub async fn new(
         config: StreamConfig,
@@ -157,15 +186,16 @@ impl StreamDataFetcher {
         admin_client: Option<HttpClient>,
         task_executor: TaskExecutor,
     ) -> Result<Self> {
-        let mut clients_with_shard_config = vec![];
-        for client in clients.into_iter() {
-            let shard_config = client.get_shard_config().await?;
-            clients_with_shard_config.push((client, shard_config));
-        }
+        let shard_configs = Arc::new(RwLock::new(vec![None; clients.len()]));
+        task_executor.spawn(
+            poll_shard_configs(clients.clone(), shard_configs.clone()),
+            "poll_shard_config",
+        );
         Ok(Self {
             config,
             store,
-            clients: Arc::new(clients_with_shard_config),
+            clients: Arc::new(clients),
+            shard_configs,
             admin_client,
             task_executor,
         })
@@ -208,6 +238,7 @@ impl StreamDataFetcher {
         self.task_executor.spawn(
             download_with_proof(
                 self.clients.clone(),
+                self.shard_configs.clone(),
                 *client_index,
                 tx,
                 start_index,
