@@ -34,6 +34,7 @@ build_config! {
     (zgs_admin_url, (String), "".to_string())
     (max_query_len_in_bytes, (u64), 1024 * 256) // 256 KB
     (max_response_body_in_bytes, (u32), 1024 * 1024 * 30) // 30MB
+    (zgs_rpc_timeout, (u64), 5) // 5 seconds
 
     // db
     (db_dir, (String), "db".to_string())

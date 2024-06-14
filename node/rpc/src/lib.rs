@@ -13,6 +13,7 @@ use jsonrpsee::http_server::{HttpServerBuilder, HttpServerHandle};
 use kv_rpc_server::KeyValueRpcServer;
 use std::error::Error;
 use std::sync::Arc;
+use std::time::Duration;
 use storage_with_stream::Store;
 use task_executor::ShutdownReason;
 use tokio::sync::RwLock;
@@ -30,12 +31,18 @@ pub struct Context {
     pub store: Arc<RwLock<dyn Store>>,
 }
 
-pub fn build_client(url: &String) -> Result<HttpClient, Box<dyn Error>> {
-    Ok(HttpClientBuilder::default().build(url)?)
+pub fn build_client(url: &String, timeout: u64) -> Result<HttpClient, Box<dyn Error>> {
+    Ok(HttpClientBuilder::default()
+        .request_timeout(Duration::from_secs(timeout))
+        .build(url)?)
 }
 
 pub fn zgs_clients(ctx: &Context) -> Result<Vec<HttpClient>, Box<dyn Error>> {
-    ctx.config.zgs_nodes.iter().map(build_client).collect()
+    ctx.config
+        .zgs_nodes
+        .iter()
+        .map(|url| build_client(url, ctx.config.zgs_rpc_timeout))
+        .collect()
 }
 
 pub async fn run_server(ctx: Context) -> Result<HttpServerHandle, Box<dyn Error>> {
