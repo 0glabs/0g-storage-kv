@@ -35,6 +35,10 @@ rpc_enabled = true
 rpc_listen_address = "0.0.0.0:6789"
 
 # Zerog storage nodes to download data from.
+# For the kv to start successfully, the storage nodes provided need to contain all
+# data in the network. So if you use a node with sharding 0/2, you need to
+# include either a full node or another sharded node which contains the data 1/2
+# to make the full data available.
 zgs_node_urls = "http://127.0.0.1:5678,http://127.0.0.1:5679"
 
 #######################################################################
