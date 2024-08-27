@@ -269,7 +269,7 @@ class TestFramework:
             dest="contract",
             default=os.path.join(
                 __file_path__,
-                "../../0g-storage-node/0g-storage-contracts/",
+                "../../0g-storage-node/storage-contracts-abis/",
             ),
             type=str,
         )

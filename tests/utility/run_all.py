@@ -6,7 +6,7 @@ import sys
 
 from concurrent.futures import ProcessPoolExecutor
 
-from utility.build_binary import build_conflux, build_bsc, build_zg, build_cli
+from utility.build_binary import build_conflux, build_bsc, build_zg, build_cli, build_storage_node
 
 DEFAULT_PORT_MIN = 11000
 DEFAULT_PORT_MAX = 65535
@@ -58,6 +58,8 @@ def run_all(test_dir: str, test_subdirs: list[str]=[], slow_tests: set[str]={}, 
     tmp_dir = os.path.join(test_dir, "tmp")
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir, exist_ok=True)
+    
+    build_storage_node(os.path.join(test_dir, "..", "0g-storage-node"))
 
     # Build blockchain binaries if absent
     build_conflux(tmp_dir)

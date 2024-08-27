@@ -4,6 +4,7 @@ import shutil
 import stat
 import requests
 import platform
+import subprocess
 from enum import Enum, unique
 
 from utility.utils import is_windows_platform, wait_until
@@ -24,6 +25,12 @@ class BuildBinaryResult(Enum):
     AlreadyExists = 0
     Installed = 1
     NotInstalled = 2
+
+def build_storage_node(dir: str):
+    original_path = os.getcwd()
+    os.chdir(dir)
+    subprocess.run(["cargo", "build", "-r", "-p", "zgs_node"], check=True)
+    os.chdir(original_path)
 
 def build_conflux(dir: str) -> BuildBinaryResult:
     # Download or build conflux binary if absent

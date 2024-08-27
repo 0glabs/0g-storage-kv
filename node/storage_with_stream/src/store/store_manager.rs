@@ -33,12 +33,12 @@ pub struct StoreManager {
 }
 
 impl LogStoreChunkWrite for StoreManager {
-    fn put_chunks(&mut self, tx_seq: u64, chunks: ChunkArray) -> Result<()> {
+    fn put_chunks(&self, tx_seq: u64, chunks: ChunkArray) -> Result<()> {
         self.log_store.put_chunks(tx_seq, chunks)
     }
 
     fn put_chunks_with_tx_hash(
-        &mut self,
+        &self,
         tx_seq: u64,
         tx_hash: H256,
         chunks: ChunkArray,
@@ -173,8 +173,12 @@ impl LogStoreRead for StoreManager {
         index_start: usize,
         index_end: usize,
     ) -> crate::error::Result<Option<ChunkArrayWithProof>> {
-        self.log_store
-            .get_chunks_with_proof_by_tx_and_index_range(tx_seq, index_start, index_end)
+        self.log_store.get_chunks_with_proof_by_tx_and_index_range(
+            tx_seq,
+            index_start,
+            index_end,
+            None,
+        )
     }
 
     fn check_tx_completed(&self, tx_seq: u64) -> crate::error::Result<bool> {
@@ -207,7 +211,7 @@ impl LogStoreRead for StoreManager {
         index: u64,
         length: u64,
     ) -> Result<FlowRangeProof> {
-        self.log_store.get_proof_at_root(root, index, length)
+        self.log_store.get_proof_at_root(Some(*root), index, length)
     }
 
     fn get_context(&self) -> Result<(DataRoot, u64)> {
