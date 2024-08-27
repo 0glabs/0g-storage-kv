@@ -17,7 +17,7 @@ rpc = { path = "./rpc" }
 kv_types = { path = "./kv_types" }
 storage_with_stream = { path = "./storage_with_stream" }
 stream = { path = "./stream" }
-task_executor = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+task_executor = { workspace = true }
 tokio = { version = "1.19.2", features = ["full"] }
 tokio-stream = { version = "0.1.9", features = ["sync"] }
 toml = "0.5.9"

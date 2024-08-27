@@ -4,15 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
-merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
-shared_types = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+append_merkle = { workspace = true }
+merkle_tree = { workspace = true }
+shared_types = { workspace = true }
 anyhow = { version = "1.0.58", features = ["backtrace"] }
 ethereum-types = "0.14"
 eth2_ssz = "0.4.0"
 eth2_ssz_derive = "0.3.0"
 eth2_ssz_types = "0.2.1"
-merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main" }
+merkle_light = { workspace = true }
 tiny-keccak = "2.0.2"
 tracing = "0.1.35"
 typenum = "1.15.0"
