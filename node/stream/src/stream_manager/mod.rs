@@ -105,7 +105,7 @@ async fn skippable(
                 && store
                     .read()
                     .await
-                    .can_write(tx.metadata.sender, id.clone(), tx.transaction.seq)
+                    .can_write(tx.metadata.sender, *id, tx.transaction.seq)
                     .await?
             {
                 can_write = true;

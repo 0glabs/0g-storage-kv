@@ -421,7 +421,10 @@ impl StreamDataFetcher {
                                 continue;
                             }
                         };
-                    info!("tx: {:?}, stream_matched: {:?}, can_write: {:?}", tx_seq, stream_matched, can_write);
+                    info!(
+                        "tx: {:?}, stream_matched: {:?}, can_write: {:?}",
+                        tx_seq, stream_matched, can_write
+                    );
                     if stream_matched && can_write {
                         // sync data
                         info!(
@@ -443,7 +446,10 @@ impl StreamDataFetcher {
                         }
                     } else if stream_matched {
                         // stream not matched, go to next tx
-                        info!("sender of tx {:?} has no write permission, skipped.", tx.transaction.seq);
+                        info!(
+                            "sender of tx {:?} has no write permission, skipped.",
+                            tx.transaction.seq
+                        );
                     } else {
                         // stream not matched, go to next tx
                         info!("tx {:?} is not in stream, skipped.", tx.transaction.seq);
