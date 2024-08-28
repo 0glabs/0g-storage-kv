@@ -14,7 +14,7 @@ use thiserror::Error;
 pub(crate) type PinBoxFut<'a, T> =
     Pin<Box<dyn Future<Output = Result<T, ProviderError>> + Send + 'a>>;
 
-const TOO_MANY_LOGS_ERROR_MSG: &str = "query returned more than";
+const TOO_MANY_LOGS_ERROR_MSG: [&str; 2] = ["query returned more than", "too large with more than"];
 
 /// A log query provides streaming access to historical logs via a paginated
 /// request. For streaming access to future logs, use [`Middleware::watch`] or
@@ -159,13 +159,14 @@ where
                         rewake_with_new_state!(ctx, self, LogQueryState::Consume);
                     }
                     Err(err) => {
-                        if err.to_string().contains(TOO_MANY_LOGS_ERROR_MSG) {
-                            self.from_block = *from_block;
-                            self.page_size /= 2;
-                            rewake_with_new_state!(ctx, self, LogQueryState::Consume);
-                        } else {
-                            Poll::Ready(Some(Err(LogQueryError::LoadLogsError(err))))
+                        for msg in TOO_MANY_LOGS_ERROR_MSG.iter() {
+                            if err.to_string().contains(msg) {
+                                self.from_block = *from_block;
+                                self.page_size /= 2;
+                                rewake_with_new_state!(ctx, self, LogQueryState::Consume);
+                            } 
                         }
+                        Poll::Ready(Some(Err(LogQueryError::LoadLogsError(err))))
                     }
                 }
             }
