@@ -85,20 +85,21 @@ impl StreamManager {
     }
 }
 
+// returns bool pair (stream_matched, can_write)
 async fn skippable(
     tx: &KVTransaction,
     config: &StreamConfig,
     store: Arc<RwLock<dyn Store>>,
-) -> Result<bool> {
-    let mut skip = false;
+) -> Result<(bool, bool)> {
     if tx.metadata.stream_ids.is_empty() {
-        skip = true;
+        Ok((false, false))
     } else {
-        let mut can_write = false;
+        let replay_progress = store.read().await.get_stream_replay_progress().await?;
+        // if replayer is not up-to-date, always make can_write be true
+        let mut can_write = replay_progress < tx.transaction.seq;
         for id in tx.metadata.stream_ids.iter() {
             if !config.stream_set.contains(id) {
-                skip = true;
-                break;
+                return Ok((false, false));
             }
             if !can_write
                 && store
@@ -110,9 +111,6 @@ async fn skippable(
                 can_write = true;
             }
         }
-        if !can_write {
-            skip = true;
-        }
+        Ok((true, can_write))
     }
-    Ok(skip)
 }

@@ -11,7 +11,7 @@ from utility.kv import (
     op_with_key,
     STREAM_DOMAIN,
     with_prefix,
-    is_write_permission_denied,
+    is_sender_no_write_permission,
     MAX_STREAM_ID,
     pad,
     to_key_with_size,
@@ -164,7 +164,7 @@ class KVPutGetTest(TestFramework):
         # write but permission denied
         self.submit(MAX_U64, [], writes, [], tx_params=TX_PARAMS1)
         wait_until(
-            lambda: is_write_permission_denied(
+            lambda: is_sender_no_write_permission(
                 self.kv_nodes[0].kv_get_trasanction_result(self.next_tx_seq)
             )
         )

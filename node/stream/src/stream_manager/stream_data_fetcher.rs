@@ -412,16 +412,18 @@ impl StreamDataFetcher {
             let maybe_tx = self.store.read().await.get_tx_by_seq_number(tx_seq);
             match maybe_tx {
                 Ok(Some(tx)) => {
-                    let skip = match skippable(&tx, &self.config, self.store.clone()).await {
-                        Ok(ok) => ok,
-                        Err(e) => {
-                            error!("check skippable error: e={:?}", e);
-                            check_sync_progress = true;
-                            continue;
-                        }
-                    };
-                    // sync data
-                    if !skip {
+                    let (stream_matched, can_write) =
+                        match skippable(&tx, &self.config, self.store.clone()).await {
+                            Ok(ok) => ok,
+                            Err(e) => {
+                                error!("check skippable error: e={:?}", e);
+                                check_sync_progress = true;
+                                continue;
+                            }
+                        };
+                    info!("tx: {:?}, stream_matched: {:?}, can_write: {:?}", tx_seq, stream_matched, can_write);
+                    if stream_matched && can_write {
+                        // sync data
                         info!(
                             "syncing data of tx with sequence number {:?}..",
                             tx.transaction.seq
@@ -439,7 +441,11 @@ impl StreamDataFetcher {
                                 continue;
                             }
                         }
+                    } else if stream_matched {
+                        // stream not matched, go to next tx
+                        info!("sender of tx {:?} has no write permission, skipped.", tx.transaction.seq);
                     } else {
+                        // stream not matched, go to next tx
                         info!("tx {:?} is not in stream, skipped.", tx.transaction.seq);
                     }
                     // update progress, get next tx_seq to sync
