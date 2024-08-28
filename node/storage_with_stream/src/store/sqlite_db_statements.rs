@@ -71,6 +71,24 @@ impl SqliteDBStatements {
         AccessControlOps::RENOUNCE_ADMIN_ROLE
     );
 
+    pub const IS_SPECIAL_WRITER_STATEMENT: &'static str = formatcp!(
+        "
+        SELECT COUNT(*) FROM (
+            SELECT * FROM 
+                t_access_control
+            WHERE account = :account AND stream_id = :stream_id AND
+            (key, version) IN (
+                    SELECT key, MAX(version) FROM
+                        t_access_control
+                    WHERE account = :account AND stream_id = :stream_id AND version <= :version
+                    GROUP BY key
+            )
+        ) AS filtered
+        WHERE op_type = {}
+        ",
+        AccessControlOps::GRANT_SPECIAL_WRITER_ROLE
+    );
+
     pub const IS_WRITER_FOR_KEY_STATEMENT: &'static str = formatcp!(
         "
         SELECT op_type FROM 

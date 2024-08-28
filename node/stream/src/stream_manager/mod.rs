@@ -6,6 +6,7 @@ use crate::StreamConfig;
 use anyhow::Result;
 use ethereum_types::H256;
 use jsonrpsee::http_client::HttpClient;
+use kv_types::KVTransaction;
 use ssz::Encode;
 use std::{collections::HashSet, sync::Arc};
 use storage_with_stream::Store;
@@ -82,4 +83,36 @@ impl StreamManager {
         );
         Ok(())
     }
+}
+
+async fn skippable(
+    tx: &KVTransaction,
+    config: &StreamConfig,
+    store: Arc<RwLock<dyn Store>>,
+) -> Result<bool> {
+    let mut skip = false;
+    if tx.metadata.stream_ids.is_empty() {
+        skip = true;
+    } else {
+        let mut can_write = false;
+        for id in tx.metadata.stream_ids.iter() {
+            if !config.stream_set.contains(id) {
+                skip = true;
+                break;
+            }
+            if !can_write
+                && store
+                    .read()
+                    .await
+                    .can_write(tx.metadata.sender, id.clone(), tx.transaction.seq)
+                    .await?
+            {
+                can_write = true;
+            }
+        }
+        if !can_write {
+            skip = true;
+        }
+    }
+    Ok(skip)
 }

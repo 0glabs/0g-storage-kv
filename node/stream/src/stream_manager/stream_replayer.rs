@@ -1,4 +1,5 @@
 use crate::stream_manager::error::ParseError;
+use crate::stream_manager::skippable;
 use crate::StreamConfig;
 use anyhow::{bail, Result};
 use ethereum_types::{H160, H256};
@@ -621,17 +622,14 @@ impl StreamReplayer {
             let maybe_tx = self.store.read().await.get_tx_by_seq_number(tx_seq);
             match maybe_tx {
                 Ok(Some(tx)) => {
-                    let mut skip = false;
-                    if tx.metadata.stream_ids.is_empty() {
-                        skip = true;
-                    } else {
-                        for id in tx.metadata.stream_ids.iter() {
-                            if !self.config.stream_set.contains(id) {
-                                skip = true;
-                                break;
-                            }
+                    let skip = match skippable(&tx, &self.config, self.store.clone()).await {
+                        Ok(ok) => ok,
+                        Err(e) => {
+                            error!("check skippable error: e={:?}", e);
+                            check_replay_progress = true;
+                            continue;
                         }
-                    }
+                    };
                     // replay data
                     if !skip {
                         info!(

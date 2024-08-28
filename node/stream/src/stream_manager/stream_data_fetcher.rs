@@ -1,4 +1,4 @@
-use crate::StreamConfig;
+use crate::{stream_manager::skippable, StreamConfig};
 use anyhow::{anyhow, bail, Result};
 use jsonrpsee::http_client::HttpClient;
 use kv_types::KVTransaction;
@@ -412,17 +412,14 @@ impl StreamDataFetcher {
             let maybe_tx = self.store.read().await.get_tx_by_seq_number(tx_seq);
             match maybe_tx {
                 Ok(Some(tx)) => {
-                    let mut skip = false;
-                    if tx.metadata.stream_ids.is_empty() {
-                        skip = true;
-                    } else {
-                        for id in tx.metadata.stream_ids.iter() {
-                            if !self.config.stream_set.contains(id) {
-                                skip = true;
-                                break;
-                            }
+                    let skip = match skippable(&tx, &self.config, self.store.clone()).await {
+                        Ok(ok) => ok,
+                        Err(e) => {
+                            error!("check skippable error: e={:?}", e);
+                            check_sync_progress = true;
+                            continue;
                         }
-                    }
+                    };
                     // sync data
                     if !skip {
                         info!(

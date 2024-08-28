@@ -140,6 +140,8 @@ pub trait StreamRead {
         version: u64,
     ) -> Result<bool>;
 
+    async fn can_write(&self, account: H160, stream_id: H256, version: u64) -> Result<bool>;
+
     async fn is_new_stream(&self, stream_id: H256, version: u64) -> Result<bool>;
 
     async fn is_admin(&self, account: H160, stream_id: H256, version: u64) -> Result<bool>;
