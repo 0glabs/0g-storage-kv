@@ -127,7 +127,7 @@ where
                         // this is okay because we will only enter this state when the filter is
                         // paginatable i.e. from block is set
                         let from_block = self.filter.get_from_block().unwrap();
-                        let to_block = min(from_block + self.page_size, last_block);
+                        let to_block = min(from_block + self.page_size - 1, last_block);
                         self.from_block = Some(to_block + 1);
 
                         let filter = self
@@ -181,9 +181,9 @@ where
                         let from_block = self.from_block.unwrap();
                         let to_block = if let Some(l) = self.last_block {
                             // if last_block is not none, only getLogs from to_block to last_block
-                            min(from_block + self.page_size, l)
+                            min(from_block + self.page_size - 1, l)
                         } else {
-                            from_block + self.page_size
+                            from_block + self.page_size - 1
                         };
 
                         // no more pages to load, and everything is consumed
