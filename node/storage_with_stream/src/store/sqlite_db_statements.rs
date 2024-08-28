@@ -76,11 +76,11 @@ impl SqliteDBStatements {
         SELECT COUNT(*) FROM (
             SELECT * FROM 
                 t_access_control
-            WHERE account = :account AND stream_id = :stream_id AND
+            WHERE stream_id = :stream_id AND account = :account AND
             (key, version) IN (
                     SELECT key, MAX(version) FROM
                         t_access_control
-                    WHERE account = :account AND stream_id = :stream_id AND version <= :version
+                    WHERE stream_id = :stream_id AND account = :account AND version <= :version
                     GROUP BY key
             )
         ) AS filtered
