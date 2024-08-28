@@ -14,7 +14,7 @@ use thiserror::Error;
 pub(crate) type PinBoxFut<'a, T> =
     Pin<Box<dyn Future<Output = Result<T, ProviderError>> + Send + 'a>>;
 
-const TOO_MANY_LOGS_ERROR_MSG: &str = "query returned more than";
+const TOO_MANY_LOGS_ERROR_MSG: &str = "result set to be queried is too large with more than";
 
 /// A log query provides streaming access to historical logs via a paginated
 /// request. For streaming access to future logs, use [`Middleware::watch`] or
