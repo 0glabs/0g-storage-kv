@@ -164,7 +164,7 @@ where
                                 self.from_block = *from_block;
                                 self.page_size /= 2;
                                 rewake_with_new_state!(ctx, self, LogQueryState::Consume);
-                            } 
+                            }
                         }
                         Poll::Ready(Some(Err(LogQueryError::LoadLogsError(err))))
                     }

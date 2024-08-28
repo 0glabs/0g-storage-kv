@@ -19,7 +19,10 @@ pub fn configure(logfile: &str, executor: TaskExecutor) {
     let logfile = logfile.trim_end().to_string();
 
     // load config synchronously
-    let mut config = std::fs::read_to_string(&logfile).unwrap_or_default().trim_end().to_string();
+    let mut config = std::fs::read_to_string(&logfile)
+        .unwrap_or_default()
+        .trim_end()
+        .to_string();
     let _ = handle.reload(&config);
 
     // periodically check for config changes
