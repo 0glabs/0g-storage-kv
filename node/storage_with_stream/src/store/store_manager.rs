@@ -274,6 +274,12 @@ impl StreamRead for StoreManager {
             .await
     }
 
+    async fn can_write(&self, account: H160, stream_id: H256, version: u64) -> Result<bool> {
+        self.stream_store
+            .can_write(account, stream_id, version)
+            .await
+    }
+
     async fn is_new_stream(&self, stream_id: H256, version: u64) -> Result<bool> {
         self.stream_store.is_new_stream(stream_id, version).await
     }

@@ -1,4 +1,5 @@
 use crate::stream_manager::error::ParseError;
+use crate::stream_manager::skippable;
 use crate::StreamConfig;
 use anyhow::{bail, Result};
 use ethereum_types::{H160, H256};
@@ -35,6 +36,7 @@ enum ReplayResult {
     DataParseError(String),
     VersionConfliction,
     TagsMismatch,
+    SenderNoWritePermission,
     WritePermissionDenied(H256, Arc<Vec<u8>>),
     AccessControlPermissionDenied(u8, H256, Arc<Vec<u8>>, H160),
     DataUnavailable,
@@ -58,6 +60,7 @@ impl fmt::Display for ReplayResult {
             ReplayResult::DataParseError(e) => write!(f, "DataParseError: {}", e),
             ReplayResult::VersionConfliction => write!(f, "VersionConfliction"),
             ReplayResult::TagsMismatch => write!(f, "TagsMismatch"),
+            ReplayResult::SenderNoWritePermission => write!(f, "SenderNoWritePermission"),
             ReplayResult::WritePermissionDenied(stream_id, key) => write!(
                 f,
                 "WritePermissionDenied: stream: {:?}, key: {}",
@@ -621,19 +624,17 @@ impl StreamReplayer {
             let maybe_tx = self.store.read().await.get_tx_by_seq_number(tx_seq);
             match maybe_tx {
                 Ok(Some(tx)) => {
-                    let mut skip = false;
-                    if tx.metadata.stream_ids.is_empty() {
-                        skip = true;
-                    } else {
-                        for id in tx.metadata.stream_ids.iter() {
-                            if !self.config.stream_set.contains(id) {
-                                skip = true;
-                                break;
+                    let (stream_matched, can_write) =
+                        match skippable(&tx, &self.config, self.store.clone()).await {
+                            Ok(ok) => ok,
+                            Err(e) => {
+                                error!("check skippable error: e={:?}", e);
+                                check_replay_progress = true;
+                                continue;
                             }
-                        }
-                    }
+                        };
                     // replay data
-                    if !skip {
+                    if stream_matched && can_write {
                         info!(
                             "replaying data of tx with sequence number {:?}..",
                             tx.transaction.seq
@@ -707,10 +708,6 @@ impl StreamReplayer {
                                         }
                                     }
                                 }
-
-                                if !check_replay_progress {
-                                    tx_seq += 1;
-                                }
                             }
                             Err(e) => {
                                 error!("replay stream data error: e={:?}", e);
@@ -719,23 +716,53 @@ impl StreamReplayer {
                                 continue;
                             }
                         }
-                    } else {
-                        info!("tx {:?} is not in stream, skipped.", tx.transaction.seq);
-                        // parse success
-                        // update progress, get next tx_seq to sync
+                    } else if stream_matched {
+                        info!(
+                            "tx {:?} is in stream but sender has no write permission.",
+                            tx.transaction.seq
+                        );
+                        let result_str = ReplayResult::SenderNoWritePermission.to_string();
                         match self
                             .store
                             .write()
                             .await
-                            .update_stream_replay_progress(tx_seq, tx_seq + 1)
+                            .put_stream(
+                                tx.transaction.seq,
+                                tx.transaction.data_merkle_root,
+                                result_str.clone(),
+                                None,
+                            )
                             .await
                         {
-                            Ok(next_tx_seq) => {
-                                tx_seq = next_tx_seq;
+                            Ok(_) => {
+                                info!(
+                                    "tx with sequence number {:?} reverted with reason {:?}",
+                                    tx.transaction.seq, result_str
+                                );
                             }
                             Err(e) => {
-                                error!("update stream replay progress error: e={:?}", e);
+                                error!("stream replay result finalization error: e={:?}", e);
+                                check_replay_progress = true;
+                                continue;
                             }
+                        }
+                    } else {
+                        info!("tx {:?} is not in stream, skipped.", tx.transaction.seq);
+                    }
+                    // parse success
+                    // update progress, get next tx_seq to sync
+                    match self
+                        .store
+                        .write()
+                        .await
+                        .update_stream_replay_progress(tx_seq, tx_seq + 1)
+                        .await
+                    {
+                        Ok(next_tx_seq) => {
+                            tx_seq = next_tx_seq;
+                        }
+                        Err(e) => {
+                            error!("update stream replay progress error: e={:?}", e);
                         }
                     }
                 }

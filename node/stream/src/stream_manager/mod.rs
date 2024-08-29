@@ -6,6 +6,7 @@ use crate::StreamConfig;
 use anyhow::Result;
 use ethereum_types::H256;
 use jsonrpsee::http_client::HttpClient;
+use kv_types::KVTransaction;
 use ssz::Encode;
 use std::{collections::HashSet, sync::Arc};
 use storage_with_stream::Store;
@@ -81,5 +82,35 @@ impl StreamManager {
             "stream data replayer",
         );
         Ok(())
+    }
+}
+
+// returns bool pair (stream_matched, can_write)
+async fn skippable(
+    tx: &KVTransaction,
+    config: &StreamConfig,
+    store: Arc<RwLock<dyn Store>>,
+) -> Result<(bool, bool)> {
+    if tx.metadata.stream_ids.is_empty() {
+        Ok((false, false))
+    } else {
+        let replay_progress = store.read().await.get_stream_replay_progress().await?;
+        // if replayer is not up-to-date, always make can_write be true
+        let mut can_write = replay_progress < tx.transaction.seq;
+        for id in tx.metadata.stream_ids.iter() {
+            if !config.stream_set.contains(id) {
+                return Ok((false, false));
+            }
+            if !can_write
+                && store
+                    .read()
+                    .await
+                    .can_write(tx.metadata.sender, *id, tx.transaction.seq)
+                    .await?
+            {
+                can_write = true;
+            }
+        }
+        Ok((true, can_write))
     }
 }

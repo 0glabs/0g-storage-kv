@@ -320,6 +320,18 @@ impl StreamStore {
             .await
     }
 
+    pub async fn can_write(&self, account: H160, stream_id: H256, version: u64) -> Result<bool> {
+        Ok(self.is_new_stream(stream_id, version).await?
+            || self.is_admin(account, stream_id, version).await?
+            || self
+                .is_writer_of_stream(account, stream_id, version)
+                .await?
+            || self
+                .special_writer_key_cnt_in_stream(account, stream_id, version)
+                .await?
+                > 0)
+    }
+
     pub async fn is_writer_of_stream(
         &self,
         account: H160,
@@ -348,6 +360,32 @@ impl StreamStore {
                     }
                 } else {
                     Ok(false)
+                }
+            })
+            .await
+    }
+
+    pub async fn special_writer_key_cnt_in_stream(
+        &self,
+        account: H160,
+        stream_id: H256,
+        version: u64,
+    ) -> Result<u64> {
+        self.connection
+            .call(move |conn| {
+                let mut stmt = conn.prepare(SqliteDBStatements::IS_SPECIAL_WRITER_STATEMENT)?;
+                let mut rows = stmt.query_map(
+                    named_params! {
+                        ":stream_id": stream_id.as_ssz_bytes(),
+                        ":account": account.as_ssz_bytes(),
+                        ":version": convert_to_i64(version),
+                    },
+                    |row| row.get(0),
+                )?;
+                if let Some(raw_data) = rows.next() {
+                    Ok(raw_data?)
+                } else {
+                    Ok(0)
                 }
             })
             .await

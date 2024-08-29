@@ -12,6 +12,7 @@ from utility.kv import (
     STREAM_DOMAIN,
     with_prefix,
     is_access_control_permission_denied,
+    is_sender_no_write_permission,
     is_write_permission_denied,
     MAX_STREAM_ID,
     pad,
@@ -495,10 +496,10 @@ class KVAccessControlTest(TestFramework):
                 stream_id, special_key, GENESIS_ACCOUNT1.address
             )
         )
-        # no permission
+        # sender no write permission
         self.submit(MAX_U64, [], [], access_controls, tx_params=TX_PARAMS1)
         wait_until(
-            lambda: is_access_control_permission_denied(
+            lambda: is_sender_no_write_permission(
                 self.kv_nodes[0].kv_get_trasanction_result(self.next_tx_seq)
             )
         )
@@ -508,6 +509,18 @@ class KVAccessControlTest(TestFramework):
         wait_until(
             lambda: self.kv_nodes[0].kv_get_trasanction_result(self.next_tx_seq)
             == "Commit"
+        )
+        self.next_tx_seq += 1
+        access_controls = []
+        access_controls.append(
+            AccessControlOps.grant_writer_role(stream_id, GENESIS_ACCOUNT1.address)
+        )
+        # access control permission denied
+        self.submit(MAX_U64, [], [], access_controls, tx_params=TX_PARAMS1)
+        wait_until(
+            lambda: is_access_control_permission_denied(
+                self.kv_nodes[0].kv_get_trasanction_result(self.next_tx_seq)
+            )
         )
         self.next_tx_seq += 1
         # role check

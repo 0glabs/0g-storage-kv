@@ -150,6 +150,11 @@ def is_write_permission_denied(x):
         return False
     return x.startswith("WritePermissionDenied")
 
+def is_sender_no_write_permission(x):
+    if x is None:
+        return False
+    return x.startswith("SenderNoWritePermission")
+
 
 # reads: array of [stream_id, key]
 # writes: array of [stream_id, key, data_length]
