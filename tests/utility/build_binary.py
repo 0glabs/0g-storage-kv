@@ -15,6 +15,7 @@ GITHUB_DOWNLOAD_URL="https://api.github.com/repos/0glabs/0g-storage-node/release
 CONFLUX_BINARY = "conflux.exe" if is_windows_platform() else "conflux"
 BSC_BINARY = "geth.exe" if is_windows_platform() else "geth"
 ZG_BINARY = "0gchaind.exe" if is_windows_platform() else "0gchaind"
+ZGS_BINARY = "zgs_node.exe" if is_windows_platform() else "zgs_node"
 CLIENT_BINARY = "0g-storage-client.exe" if is_windows_platform() else "0g-storage-client"
 
 ZG_GIT_REV = "7bc25a060fab9c17bc9942b6747cd07a668d3042" # v0.1.0
@@ -26,11 +27,14 @@ class BuildBinaryResult(Enum):
     Installed = 1
     NotInstalled = 2
 
-def build_storage_node(dir: str):
-    original_path = os.getcwd()
-    os.chdir(dir)
-    subprocess.run(["cargo", "build", "-r", "-p", "zgs_node"], check=True)
-    os.chdir(original_path)
+def build_zgs(dir: str) -> BuildBinaryResult:
+    return __build_from_github(
+        dir=dir,
+        binary_name=ZGS_BINARY,
+        github_url="https://github.com/0glabs/0g-storage-node.git",
+        build_cmd="cargo build --release",
+        compiled_relative_path=["target", "release"],
+    )
 
 def build_conflux(dir: str) -> BuildBinaryResult:
     # Download or build conflux binary if absent

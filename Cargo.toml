@@ -16,10 +16,10 @@ enr = { path = "version-meld/enr" }
 discv5 = { path = "version-meld/discv5" }
 
 [workspace.dependencies]
-append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "a79f7bbf126df3748d072076dccdc7e0c34bd971" }
-merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "a79f7bbf126df3748d072076dccdc7e0c34bd971" }
-merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "a79f7bbf126df3748d072076dccdc7e0c34bd971" }
-shared_types = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "a79f7bbf126df3748d072076dccdc7e0c34bd971" }
-task_executor = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "a79f7bbf126df3748d072076dccdc7e0c34bd971" }
-storage = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "a79f7bbf126df3748d072076dccdc7e0c34bd971" }
-contract-interface = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "a79f7bbf126df3748d072076dccdc7e0c34bd971" }
+append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "59d24b073d93c1146666295e48609825f761abea" }
+merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "59d24b073d93c1146666295e48609825f761abea" }
+merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "59d24b073d93c1146666295e48609825f761abea" }
+shared_types = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "59d24b073d93c1146666295e48609825f761abea" }
+task_executor = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "59d24b073d93c1146666295e48609825f761abea" }
+storage = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "59d24b073d93c1146666295e48609825f761abea" }
+contract-interface = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "59d24b073d93c1146666295e48609825f761abea" }

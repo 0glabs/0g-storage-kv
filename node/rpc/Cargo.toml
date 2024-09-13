@@ -24,4 +24,4 @@ storage_with_stream = { path = "../storage_with_stream" }
 kv_types = { path = "../kv_types" }
 
 [dev-dependencies]
-serde_json = "1.0.82"
+serde_json = "1.0.127"
