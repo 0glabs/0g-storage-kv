@@ -7,7 +7,7 @@ run/db
 run/kv.DB
 run/config.toml
 run/run.sh
-dummy*
+/dummy*
 tags*
 test.py
 test.txt
