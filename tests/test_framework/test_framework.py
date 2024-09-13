@@ -70,7 +70,7 @@ class TestFramework:
         )
 
         self.__default_zgs_node_binary__ = os.path.join(
-            root_dir, "0g-storage-node", "target", "release", "zgs_node" + binary_ext
+            tests_dir, "tmp", "zgs_node" + binary_ext
         )
         self.__default_zgs_cli_binary__ = os.path.join(
             tests_dir, "tmp", "0g-storage-client"  + binary_ext
@@ -243,10 +243,7 @@ class TestFramework:
         parser.add_argument(
             "--zerog-storage-binary",
             dest="zerog_storage",
-            default=os.getenv(
-                "ZGS",
-                default=self.__default_zgs_node_binary__,
-            ),
+            default=self.__default_zgs_node_binary__,
             type=str,
         )
 
@@ -269,7 +266,7 @@ class TestFramework:
             dest="contract",
             default=os.path.join(
                 __file_path__,
-                "../../0g-storage-node/storage-contracts-abis/",
+                "../storage-contracts-abis/",
             ),
             type=str,
         )
