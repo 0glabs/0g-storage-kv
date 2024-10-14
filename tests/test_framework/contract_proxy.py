@@ -17,17 +17,25 @@ class ContractProxy:
             else self.blockchain_nodes[node_idx].get_contract(self.contract_address)
         )
 
-    def _call(self, fn_name, node_idx, **args):
+    def _call(self, fn_name, node_idx, *args):
         assert node_idx < len(self.blockchain_nodes)
 
         contract = self._get_contract(node_idx)
-        return getattr(contract.functions, fn_name)(**args).call()
+        return getattr(contract.functions, fn_name)(*args).call()
 
     def _send(self, fn_name, node_idx, **args):
         assert node_idx < len(self.blockchain_nodes)
 
         contract = self._get_contract(node_idx)
         return getattr(contract.functions, fn_name)(**args).transact(copy(TX_PARAMS))
+
+    def _send_payable(self, fn_name, node_idx, value, **args):
+        assert node_idx < len(self.blockchain_nodes)
+
+        contract = self._get_contract(node_idx)
+        tx_params = copy(TX_PARAMS)
+        tx_params["value"] = value
+        return getattr(contract.functions, fn_name)(**args).transact(tx_params)
     
     def _logs(self, event_name, node_idx, **args):
         assert node_idx < len(self.blockchain_nodes)
@@ -49,14 +57,14 @@ class ContractProxy:
 
 class FlowContractProxy(ContractProxy):
     def submit(
-        self, submission_nodes, node_idx=0, tx_params=None, parent_hash=None,
+        self, submission_nodes, node_idx=0, tx_prarams=None, parent_hash=None,
     ):
         assert node_idx < len(self.blockchain_nodes)
 
         combined_tx_prarams = copy(TX_PARAMS)
 
-        if tx_params is not None:
-            combined_tx_prarams.update(tx_params)
+        if tx_prarams is not None:
+            combined_tx_prarams.update(tx_prarams)
             
 
         contract = self._get_contract(node_idx)
@@ -66,7 +74,6 @@ class FlowContractProxy(ContractProxy):
             contract.w3, tx_hash, parent_hash=parent_hash
         )
         if receipt["status"] != 1:
-            print(receipt)
             assert_equal(receipt["status"], 1)
         return tx_hash
 
@@ -90,11 +97,26 @@ class MineContractProxy(ContractProxy):
     def last_mined_epoch(self, node_idx=0):
         return self._call("lastMinedEpoch", node_idx)
 
+    def can_submit(self, node_idx=0):
+        return self._call("canSubmit", node_idx)
+
     def set_quality(self, quality, node_idx=0):
         return self._send("setQuality", node_idx, _targetQuality=quality)
     
 
 
-class IRewardContractProxy(ContractProxy):
+class RewardContractProxy(ContractProxy):
     def reward_distributes(self, node_idx=0):
         return self._logs("DistributeReward", node_idx)
+
+    def donate(self, value, node_idx = 0):
+        return self._send_payable("donate", node_idx, value)
+    
+    def base_reward(self, node_idx = 0):
+        return self._call("baseReward", node_idx)
+
+    def first_rewardable_chunk(self, node_idx = 0):
+        return self._call("firstRewardableChunk", node_idx)
+
+    def reward_deadline(self, node_idx = 0):
+        return self._call("rewardDeadline", node_idx, 0)

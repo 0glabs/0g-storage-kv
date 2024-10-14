@@ -1,22 +1,12 @@
 #!/usr/bin/env python3
-import base64
-from this import d
-import time
-from os import access
 import random
-from test_framework.test_framework import TestFramework
+from kv_test_framework.test_framework import KVTestFramework
 from utility.kv import (
     MAX_U64,
-    op_with_address,
-    op_with_key,
-    STREAM_DOMAIN,
-    with_prefix,
     is_access_control_permission_denied,
     is_sender_no_write_permission,
     is_write_permission_denied,
     MAX_STREAM_ID,
-    pad,
-    to_key_with_size,
     to_stream_id,
     create_kv_data,
     AccessControlOps,
@@ -24,7 +14,7 @@ from utility.kv import (
     rand_write,
 )
 from utility.submission import submit_data
-from utility.submission import create_submission
+from kv_utility.submission import create_submission
 from utility.utils import (
     assert_equal,
     wait_until,
@@ -32,7 +22,7 @@ from utility.utils import (
 from config.node_config import TX_PARAMS, TX_PARAMS1, GENESIS_ACCOUNT, GENESIS_ACCOUNT1
 
 
-class KVAccessControlTest(TestFramework):
+class KVAccessControlTest(KVTestFramework):
     def setup_params(self):
         self.num_blockchain_nodes = 1
         self.num_nodes = 1
@@ -66,7 +56,7 @@ class KVAccessControlTest(TestFramework):
         submissions, data_root = create_submission(
             chunk_data, tags if given_tags is None else given_tags
         )
-        self.contract.submit(submissions, tx_params=tx_params)
+        self.contract.submit(submissions, tx_prarams=tx_params)
         wait_until(lambda: self.contract.num_submissions() == self.next_tx_seq + 1)
 
         client = self.nodes[0]

@@ -4,7 +4,6 @@ import shutil
 import stat
 import requests
 import platform
-import subprocess
 from enum import Enum, unique
 
 from utility.utils import is_windows_platform, wait_until
@@ -15,10 +14,8 @@ GITHUB_DOWNLOAD_URL="https://api.github.com/repos/0glabs/0g-storage-node/release
 CONFLUX_BINARY = "conflux.exe" if is_windows_platform() else "conflux"
 BSC_BINARY = "geth.exe" if is_windows_platform() else "geth"
 ZG_BINARY = "0gchaind.exe" if is_windows_platform() else "0gchaind"
-ZGS_BINARY = "zgs_node.exe" if is_windows_platform() else "zgs_node"
 CLIENT_BINARY = "0g-storage-client.exe" if is_windows_platform() else "0g-storage-client"
 
-ZG_GIT_REV = "7bc25a060fab9c17bc9942b6747cd07a668d3042" # v0.1.0
 CLI_GIT_REV = "98d74b7e7e6084fc986cb43ce2c66692dac094a6"
 
 @unique
@@ -26,15 +23,6 @@ class BuildBinaryResult(Enum):
     AlreadyExists = 0
     Installed = 1
     NotInstalled = 2
-
-def build_zgs(dir: str) -> BuildBinaryResult:
-    return __build_from_github(
-        dir=dir,
-        binary_name=ZGS_BINARY,
-        github_url="https://github.com/0glabs/0g-storage-node.git",
-        build_cmd="cargo build --release",
-        compiled_relative_path=["target", "release"],
-    )
 
 def build_conflux(dir: str) -> BuildBinaryResult:
     # Download or build conflux binary if absent
@@ -87,8 +75,7 @@ def build_zg(dir: str) -> BuildBinaryResult:
         dir=dir,
         binary_name=ZG_BINARY,
         github_url="https://github.com/0glabs/0g-chain.git",
-        git_rev=ZG_GIT_REV,
-        build_cmd="make install; cp $(go env GOPATH)/bin/0gchaind .",
+        build_cmd="git fetch origin pull/74/head:pr-74; git checkout pr-74; make install; cp $(go env GOPATH)/bin/0gchaind .",
         compiled_relative_path=[],
     )
 

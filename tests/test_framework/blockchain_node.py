@@ -2,9 +2,7 @@ import os
 import subprocess
 import tempfile
 import time
-import rlp
 
-from eth_utils import decode_hex, keccak
 from web3 import Web3, HTTPProvider
 from web3.middleware import construct_sign_and_send_raw_middleware
 from enum import Enum, unique
@@ -12,7 +10,6 @@ from config.node_config import (
     GENESIS_PRIV_KEY,
     GENESIS_PRIV_KEY1,
     TX_PARAMS,
-    MINER_ID,
 )
 from utility.simple_rpc_proxy import SimpleRpcProxy
 from utility.utils import (
@@ -33,15 +30,16 @@ class BlockChainNodeType(Enum):
         if self == BlockChainNodeType.Conflux:
             return 0.5
         elif self == BlockChainNodeType.BSC:
-            return 25 / estimate_st_performance()
+            return 32 / estimate_st_performance()
+        elif self == BlockChainNodeType.ZG:
+            return 0.5
         else:
-            return 3.0
+            raise AssertionError("Unsupported blockchain type")
 
 @unique
 class NodeType(Enum):
     BlockChain = 0
     Zgs = 1
-    KV = 2
 
 
 class FailedToStartError(Exception):
@@ -254,7 +252,7 @@ class BlockchainNode(TestNode):
     def wait_for_transaction_receipt(self, w3, tx_hash, timeout=120, parent_hash=None):
         return w3.eth.wait_for_transaction_receipt(tx_hash, timeout)
 
-    def setup_contract(self, enable_market, mine_period, lifetime_seconds = 3600):
+    def setup_contract(self, enable_market, mine_period, lifetime_seconds):
         w3 = Web3(HTTPProvider(self.rpc_url))
 
         account1 = w3.eth.account.from_key(GENESIS_PRIV_KEY)
@@ -268,7 +266,7 @@ class BlockchainNode(TestNode):
         def deploy_contract(name, args=None):
             if args is None:
                 args = []
-            contract_interface = load_contract_metadata(base_path=self.contract_path, name=name)
+            contract_interface = load_contract_metadata(path=self.contract_path, name=name)
             contract = w3.eth.contract(
                 abi=contract_interface["abi"],
                 bytecode=contract_interface["bytecode"],
