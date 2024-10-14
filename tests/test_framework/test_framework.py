@@ -15,14 +15,14 @@ from pathlib import Path
 
 from eth_utils import encode_hex
 from test_framework.bsc_node import BSCNode
-from test_framework.contract_proxy import FlowContractProxy, MineContractProxy, IRewardContractProxy
+from test_framework.contract_proxy import FlowContractProxy, MineContractProxy, RewardContractProxy
 from test_framework.zgs_node import ZgsNode
 from test_framework.blockchain_node import BlockChainNodeType
 from test_framework.conflux_node import ConfluxNode, connect_sample_nodes
 from test_framework.zg_node import ZGNode, zg_node_init_genesis
-from test_framework.kv_node import KVNode
-from utility.utils import PortMin, is_windows_platform, wait_until
+from utility.utils import PortMin, is_windows_platform, wait_until, assert_equal
 from utility.build_binary import build_cli
+from utility.submission import create_submission, submit_data
 
 __file_path__ = os.path.dirname(os.path.realpath(__file__))
 
@@ -41,11 +41,10 @@ class TestFramework:
         if "http_proxy" in os.environ:
             del os.environ["http_proxy"]
 
-        self.num_blockchain_nodes = None
-        self.num_nodes = None
+        self.num_blockchain_nodes = 1
+        self.num_nodes = 1
         self.blockchain_nodes = []
         self.nodes = []
-        self.kv_nodes = []
         self.contract = None
         self.blockchain_node_configs = {}
         self.zgs_node_configs = {}
@@ -53,7 +52,9 @@ class TestFramework:
         self.block_time = blockchain_node_type.block_time()
         self.enable_market = False
         self.mine_period = 100
+        self.lifetime_seconds = 3600
         self.launch_wait_seconds = 1
+        self.num_deployed_contracts = 0
 
         # Set default binary path
         binary_ext = ".exe" if is_windows_platform() else ""
@@ -68,15 +69,11 @@ class TestFramework:
         self.__default_zg_binary__ = os.path.join(
             tests_dir, "tmp", "0gchaind" + binary_ext
         )
-
         self.__default_zgs_node_binary__ = os.path.join(
-            tests_dir, "tmp", "zgs_node" + binary_ext
+            root_dir, "target", "release", "zgs_node" + binary_ext
         )
         self.__default_zgs_cli_binary__ = os.path.join(
             tests_dir, "tmp", "0g-storage-client"  + binary_ext
-        )
-        self.__default_zgs_kv_binary__ = os.path.join(
-            __file_path__, root_dir, "target", "release", "zgs_kv" + binary_ext
         )
 
     def __setup_blockchain_node(self):
@@ -170,17 +167,17 @@ class TestFramework:
                 # sync_blocks(self.blockchain_nodes)
         elif self.blockchain_node_type == BlockChainNodeType.ZG:
             # wait for the first block
-            self.log.debug("Wait 3 seconds for 0gchain node to generate first block")
-            time.sleep(3)
+            self.log.debug("Wait for 0gchain node to generate first block")
+            time.sleep(0.5)
             for node in self.blockchain_nodes:
                 wait_until(lambda: node.net_peerCount() == self.num_blockchain_nodes - 1)
                 wait_until(lambda: node.eth_blockNumber() is not None)
                 wait_until(lambda: int(node.eth_blockNumber(), 16) > 0)
 
-        contract, tx_hash, mine_contract, reward_contract = self.blockchain_nodes[0].setup_contract(self.enable_market, self.mine_period)
+        contract, tx_hash, mine_contract, reward_contract = self.blockchain_nodes[0].setup_contract(self.enable_market, self.mine_period, self.lifetime_seconds)
         self.contract = FlowContractProxy(contract, self.blockchain_nodes)
         self.mine_contract = MineContractProxy(mine_contract, self.blockchain_nodes)
-        self.reward_contract = IRewardContractProxy(reward_contract, self.blockchain_nodes)
+        self.reward_contract = RewardContractProxy(reward_contract, self.blockchain_nodes)
 
 
         for node in self.blockchain_nodes[1:]:
@@ -203,6 +200,7 @@ class TestFramework:
                 updated_config,
                 self.contract.address(),
                 self.mine_contract.address(),
+                self.reward_contract.address(),
                 self.log,
             )
             self.nodes.append(node)
@@ -243,7 +241,10 @@ class TestFramework:
         parser.add_argument(
             "--zerog-storage-binary",
             dest="zerog_storage",
-            default=self.__default_zgs_node_binary__,
+            default=os.getenv(
+                "ZGS",
+                default=self.__default_zgs_node_binary__,
+            ),
             type=str,
         )
 
@@ -255,18 +256,11 @@ class TestFramework:
         )
 
         parser.add_argument(
-            "--zgs-kv",
-            dest="zgs_kv",
-            default=self.__default_zgs_kv_binary__,
-            type=str,
-        )
-
-        parser.add_argument(
             "--contract-path",
             dest="contract",
             default=os.path.join(
                 __file_path__,
-                "../storage-contracts-abis/",
+                "../../storage-contracts-abis/",
             ),
             type=str,
         )
@@ -406,6 +400,31 @@ class TestFramework:
 
         return root
 
+    def __submit_file__(self, chunk_data: bytes) -> str:
+        submissions, data_root = create_submission(chunk_data)
+        self.contract.submit(submissions)
+        self.num_deployed_contracts += 1
+        wait_until(lambda: self.contract.num_submissions() == self.num_deployed_contracts)
+        self.log.info("Submission completed, data root: %s, submissions(%s) = %s", data_root, len(submissions), submissions)
+        return data_root
+
+    def __upload_file__(self, node_index: int, random_data_size: int) -> str:
+        # Create submission
+        chunk_data = random.randbytes(random_data_size)
+        data_root = self.__submit_file__(chunk_data)
+
+        # Ensure log entry sync from blockchain node
+        client = self.nodes[node_index]
+        wait_until(lambda: client.zgs_get_file_info(data_root) is not None)
+        assert_equal(client.zgs_get_file_info(data_root)["finalized"], False)
+
+        # Upload file to storage node
+        segments = submit_data(client, chunk_data)
+        self.log.info("segments: %s", [(s["root"], s["index"], s["proof"]) for s in segments])
+        wait_until(lambda: client.zgs_get_file_info(data_root)["finalized"])
+
+        return data_root
+
     def setup_params(self):
         self.num_blockchain_nodes = 1
         self.num_nodes = 1
@@ -413,24 +432,6 @@ class TestFramework:
     def setup_nodes(self):
         self.__setup_blockchain_node()
         self.__setup_zgs_node()
-
-    def setup_kv_node(self, index, stream_ids, updated_config={}):
-        assert os.path.exists(self.kv_binary), "%s should be exist" % self.kv_binary
-        node = KVNode(
-            index,
-            self.root_dir,
-            self.kv_binary,
-            updated_config,
-            self.contract.address(),
-            self.log,
-            stream_ids=stream_ids,
-        )
-        self.kv_nodes.append(node)
-        node.setup_config()
-        node.start()
-
-        time.sleep(1)
-        node.wait_for_rpc_connection()
 
     def stop_nodes(self):
         # stop storage nodes first
@@ -440,16 +441,11 @@ class TestFramework:
         for node in self.blockchain_nodes:
             node.stop()
 
-    def stop_kv_node(self, index):
-        self.kv_nodes[index].stop()
-
     def stop_storage_node(self, index, clean=False):
         self.nodes[index].stop()
         if clean:
             self.nodes[index].clean_data()
 
-    def start_kv_node(self, index):
-        self.kv_nodes[index].start()
 
     def start_storage_node(self, index):
         self.nodes[index].start()
@@ -502,7 +498,6 @@ class TestFramework:
         self.zgs_binary = os.path.abspath(self.options.zerog_storage)
         self.cli_binary = os.path.abspath(self.options.cli)
         self.contract_path = os.path.abspath(self.options.contract)
-        self.kv_binary = os.path.abspath(self.options.zgs_kv)
 
         assert os.path.exists(self.contract_path), (
             "%s should be exist" % self.contract_path

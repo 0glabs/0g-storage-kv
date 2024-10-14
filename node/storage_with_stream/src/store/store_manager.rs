@@ -441,7 +441,8 @@ impl StreamWrite for StoreManager {
 }
 
 impl StoreManager {
-    pub async fn memorydb(config: LogConfig,
+    pub async fn memorydb(
+        config: LogConfig,
         executor: task_executor::TaskExecutor,
     ) -> Result<Self> {
         let stream_store = StreamStore::new_in_memory().await?;

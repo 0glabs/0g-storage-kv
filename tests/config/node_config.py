@@ -3,11 +3,19 @@ from web3 import Web3
 ZGS_CONFIG = {
     "log_config_file": "log_config",
     "confirmation_block_count": 1,
-}
-
-KV_CONFIG = {
-    "log_config_file": "log_config",
-    "confirmation_block_count": 1,
+    "router": {
+        "private_ip_enabled": True,
+    },
+    "sync": {
+        "heartbeat_interval": "1s",
+        "peer_connect_timeout": "3s",
+        "peer_disconnect_timeout": "3s",
+        "peer_find_timeout": "3s",
+        "peer_chunks_download_timeout": "3s",
+        "auto_sync_idle_interval": "1s",
+        "sequential_find_peer_timeout": "10s",
+        "random_find_peer_timeout": "10s",
+    }
 }
 
 BSC_CONFIG = dict(
@@ -55,3 +63,13 @@ TX_PARAMS1 = {
 
 NO_SEAL_FLAG = 0x1
 NO_MERKLE_PROOF_FLAG = 0x2
+
+def update_config(default: dict, custom: dict):
+    """
+    Supports to update configurations with dict value.
+    """
+    for (key, value) in custom.items():
+        if default.get(key) is None or type(value) != dict:
+            default[key] = value
+        else:
+            update_config(default[key], value)

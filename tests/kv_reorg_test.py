@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import random
-from test_framework.test_framework import TestFramework
+from kv_test_framework.test_framework import KVTestFramework
 from test_framework.conflux_node import connect_nodes, disconnect_nodes, sync_blocks
 from test_framework.blockchain_node import BlockChainNodeType
 from utility.kv import (
@@ -11,7 +11,7 @@ from utility.kv import (
     rand_write,
 )
 from utility.submission import submit_data
-from utility.submission import create_submission
+from kv_utility.submission import create_submission
 from utility.utils import (
     assert_equal,
     wait_until,
@@ -19,7 +19,7 @@ from utility.utils import (
 from config.node_config import TX_PARAMS, GENESIS_ACCOUNT
 
 
-class ReorgTest(TestFramework):
+class ReorgTest(KVTestFramework):
     def setup_params(self):
         self.num_blockchain_nodes = 2
         self.num_nodes = 1
@@ -61,7 +61,7 @@ class ReorgTest(TestFramework):
         submissions, data_root = create_submission(
             chunk_data, tags if given_tags is None else given_tags
         )
-        self.contract.submit(submissions, tx_params=tx_params, node_idx=node_index)
+        self.contract.submit(submissions, tx_prarams=tx_params, node_idx=node_index)
         wait_until(
             lambda: self.contract.num_submissions(node_index) == self.next_tx_seq + 1
         )

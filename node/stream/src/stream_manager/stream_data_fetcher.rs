@@ -50,7 +50,8 @@ async fn download_with_proof(
     while fail_cnt < clients.len() {
         // find next
         let seg_index = start_index / ENTRIES_PER_SEGMENT;
-        let flow_seg_index = (tx.transaction.start_entry_index as usize + start_index) / ENTRIES_PER_SEGMENT;
+        let flow_seg_index =
+            (tx.transaction.start_entry_index as usize + start_index) / ENTRIES_PER_SEGMENT;
         let mut try_cnt = 0;
         loop {
             let configs = shard_configs.read().await;
