@@ -25,6 +25,7 @@ rusqlite = { version = "0.28.0", features = ["bundled"] }
 const_format = "0.2.26"
 tokio-rusqlite = "0.3.0"
 async-trait = "0.1.56"
+task_executor = { workspace = true }
 
 [dev-dependencies]
 tempdir = "0.3.7"

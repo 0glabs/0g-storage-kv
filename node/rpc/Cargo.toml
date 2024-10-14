@@ -17,7 +17,7 @@ tokio = { version = "1.19.2", features = ["macros", "sync"] }
 tracing = "0.1.35"
 merkle_light = { workspace = true }
 merkle_tree = { workspace = true }
-zgs_rpc = { git = "https://github.com/0glabs/0g-storage-node.git", branch = "main", package = "rpc" }
+zgs_rpc = { git = "https://github.com/0glabs/0g-storage-node.git", rev = "3fc1543fb4a1b9321cf5ecc9a81e152a14950995", package = "rpc" }
 futures-channel = "^0.3"
 ethereum-types = "0.14"
 storage_with_stream = { path = "../storage_with_stream" }

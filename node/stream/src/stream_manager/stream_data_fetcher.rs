@@ -50,11 +50,12 @@ async fn download_with_proof(
     while fail_cnt < clients.len() {
         // find next
         let seg_index = start_index / ENTRIES_PER_SEGMENT;
+        let flow_seg_index = (tx.transaction.start_entry_index as usize + start_index) / ENTRIES_PER_SEGMENT;
         let mut try_cnt = 0;
         loop {
             let configs = shard_configs.read().await;
             if let Some(shard_config) = configs[index] {
-                if seg_index % shard_config.num_shard == shard_config.shard_id {
+                if flow_seg_index % shard_config.num_shard == shard_config.shard_id {
                     break;
                 }
             }
@@ -76,7 +77,7 @@ async fn download_with_proof(
             tx.transaction.seq, start_index, end_index, index
         );
         match clients[index]
-            .download_segment_with_proof(tx.transaction.data_merkle_root, seg_index)
+            .download_segment_with_proof_by_tx_seq(tx.transaction.seq, seg_index)
             .await
         {
             Ok(Some(segment)) => {
