@@ -441,12 +441,14 @@ impl StreamWrite for StoreManager {
 }
 
 impl StoreManager {
-    pub async fn memorydb(config: LogConfig) -> Result<Self> {
+    pub async fn memorydb(config: LogConfig,
+        executor: task_executor::TaskExecutor,
+    ) -> Result<Self> {
         let stream_store = StreamStore::new_in_memory().await?;
         stream_store.create_tables_if_not_exist().await?;
         Ok(Self {
             metadata_store: MetadataStore::memorydb(),
-            log_store: LogManager::memorydb(config)?,
+            log_store: LogManager::memorydb(config, executor)?,
             stream_store,
         })
     }
@@ -455,12 +457,13 @@ impl StoreManager {
         config: LogConfig,
         path: impl AsRef<Path>,
         kv_db_file: impl AsRef<Path>,
+        executor: task_executor::TaskExecutor,
     ) -> Result<Self> {
         let stream_store = StreamStore::new(kv_db_file.as_ref()).await?;
         stream_store.create_tables_if_not_exist().await?;
         Ok(Self {
             metadata_store: MetadataStore::rocksdb(path.as_ref().join("metadata"))?,
-            log_store: LogManager::rocksdb(config, path.as_ref().join("log"))?,
+            log_store: LogManager::rocksdb(config, path.as_ref().join("log"), executor)?,
             stream_store,
         })
     }
