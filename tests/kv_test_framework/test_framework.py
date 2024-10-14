@@ -86,6 +86,13 @@ class KVTestFramework(TestFramework):
         self.kv_nodes[index].start()
 
         self.nodes[index].start()
+
+    
+    def stop_nodes(self):
+        super().stop_nodes()
+
+        for node in self.kv_nodes:
+            node.stop()
     
     def __start_logging(self):
         # Add logger and logging handlers
