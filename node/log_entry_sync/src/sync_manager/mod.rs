@@ -324,7 +324,7 @@ impl LogSyncManager {
         let _ = self.event_send.send(LogSyncEvent::ReorgDetected { tx_seq });
 
         // TODO(zz): `wrapping_sub` here is a hack to handle the case of tx_seq=0.
-        if let Err(e) = self.store.write().await.revert_to(tx_seq.wrapping_sub(1)) {
+        if let Err(e) = self.store.write().await.revert_stream(tx_seq.wrapping_sub(1)).await {
             error!("revert_to fails: e={:?}", e);
             return;
         }
@@ -391,7 +391,7 @@ impl LogSyncManager {
                         Some(true) => {
                             if let Err(e) = self
                                 .store
-                                .read()
+                                .write()
                                 .await
                                 .put_log_latest_block_number(block_number)
                             {
