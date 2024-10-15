@@ -21,13 +21,31 @@ from config.node_config import TX_PARAMS, TX_PARAMS1, GENESIS_ACCOUNT, GENESIS_A
 class KVPutGetTest(KVTestFramework):
     def setup_params(self):
         self.num_blockchain_nodes = 1
-        self.num_nodes = 1
+        self.num_nodes = 4
+        self.zgs_node_configs[0] = {
+            "db_max_num_sectors": 2 ** 30,
+            "shard_position": "0/4"
+        }
+        self.zgs_node_configs[1] = {
+            "db_max_num_sectors": 2 ** 30,
+            "shard_position": "1/4"
+        }
+        self.zgs_node_configs[2] = {
+            "db_max_num_sectors": 2 ** 30,
+            "shard_position": "2/4"
+        }
+        self.zgs_node_configs[3] = {
+            "db_max_num_sectors": 2 ** 30,
+            "shard_position": "3/4"
+        }
 
     def run_test(self):
         # setup kv node, watch stream with id [0,100)
         self.stream_ids = [to_stream_id(i) for i in range(MAX_STREAM_ID)]
         self.stream_ids.reverse()
-        self.setup_kv_node(0, self.stream_ids)
+        self.setup_kv_node(0, self.stream_ids, updated_config={
+            "zgs_node_urls": ",".join([node.rpc_url for node in self.nodes])
+        })
         self.stream_ids.reverse()
         assert_equal(
             [x[2:] for x in self.kv_nodes[0].kv_get_holding_stream_ids()],
@@ -61,11 +79,10 @@ class KVPutGetTest(KVTestFramework):
         self.contract.submit(submissions, tx_prarams=tx_params)
         wait_until(lambda: self.contract.num_submissions() == self.next_tx_seq + 1)
 
-        client = self.nodes[0]
-        wait_until(lambda: client.zgs_get_file_info(data_root) is not None)
-
-        segments = submit_data(client, chunk_data)
-        wait_until(lambda: client.zgs_get_file_info(data_root)["finalized"])
+        for client in self.nodes:
+            wait_until(lambda: client.zgs_get_file_info(data_root) is not None)
+            submit_data(client, chunk_data)
+            wait_until(lambda: client.zgs_get_file_info(data_root)["finalized"])
 
     def update_data(self, writes):
         for write in writes:
