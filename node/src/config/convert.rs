@@ -91,6 +91,7 @@ impl ZgsKVConfig {
             self.default_finalized_block_count,
             self.remove_finalized_block_interval_minutes,
             self.watch_loop_wait_time_ms,
+            self.force_log_sync_from_start_block_number,
         ))
     }
 }

@@ -1,6 +1,6 @@
-use crate::rpc_proxy::ContractAddress;
 use crate::sync_manager::log_query::LogQuery;
 use crate::sync_manager::RETRY_WAIT_MS;
+use crate::ContractAddress;
 use anyhow::{anyhow, bail, Result};
 use append_merkle::{Algorithm, Sha3Algorithm};
 use contract_interface::{SubmissionNode, SubmitFilter, ZgsFlow};
@@ -19,9 +19,12 @@ use std::time::Duration;
 use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
 use storage_with_stream::Store;
 use task_executor::TaskExecutor;
-use tokio::sync::{
-    mpsc::{UnboundedReceiver, UnboundedSender},
-    RwLock,
+use tokio::{
+    sync::{
+        mpsc::{UnboundedReceiver, UnboundedSender},
+        RwLock,
+    },
+    time::Instant,
 };
 
 pub struct LogEntryFetcher {
@@ -144,6 +147,16 @@ impl LogEntryFetcher {
                         }
                     };
 
+                    let log_latest_block_number =
+                        match store.read().await.get_log_latest_block_number() {
+                            Ok(Some(b)) => b,
+                            Ok(None) => 0,
+                            Err(e) => {
+                                error!("get log latest block number error: e={:?}", e);
+                                0
+                            }
+                        };
+
                     if let Some(processed_block_number) = processed_block_number {
                         let finalized_block_number =
                             match provider.get_block(BlockNumber::Finalized).await {
@@ -167,27 +180,28 @@ impl LogEntryFetcher {
                             };
 
                         if let Some(finalized_block_number) = finalized_block_number {
-                            if processed_block_number >= finalized_block_number {
-                                let mut pending_keys = vec![];
-                                for (key, _) in block_hash_cache.read().await.iter() {
-                                    if *key < finalized_block_number {
-                                        pending_keys.push(*key);
-                                    } else {
-                                        break;
-                                    }
+                            let safe_block_number = std::cmp::min(
+                                std::cmp::min(
+                                    log_latest_block_number.saturating_sub(1),
+                                    finalized_block_number,
+                                ),
+                                processed_block_number,
+                            );
+                            let mut pending_keys = vec![];
+                            for (key, _) in block_hash_cache.read().await.iter() {
+                                if *key < safe_block_number {
+                                    pending_keys.push(*key);
+                                } else {
+                                    break;
                                 }
+                            }
 
-                                for key in pending_keys.into_iter() {
-                                    if let Err(e) =
-                                        store.write().await.delete_block_hash_by_number(key)
-                                    {
-                                        error!(
-                                            "remove block tx for number {} error: e={:?}",
-                                            key, e
-                                        );
-                                    } else {
-                                        block_hash_cache.write().await.remove(&key);
-                                    }
+                            for key in pending_keys.into_iter() {
+                                if let Err(e) = store.write().await.delete_block_hash_by_number(key)
+                                {
+                                    error!("remove block tx for number {} error: e={:?}", key, e);
+                                } else {
+                                    block_hash_cache.write().await.remove(&key);
                                 }
                             }
                         }
@@ -212,7 +226,7 @@ impl LogEntryFetcher {
     ) -> UnboundedReceiver<LogFetchProgress> {
         let provider = self.provider.clone();
         let (recover_tx, recover_rx) = tokio::sync::mpsc::unbounded_channel();
-        let contract = ZgsFlow::new(self.contract_address, provider.clone());
+        let contract = self.flow_contract();
         let log_page_size = self.log_page_size;
 
         executor.spawn(
@@ -253,7 +267,10 @@ impl LogEntryFetcher {
                             }) {
                                 Ok(event) => {
                                     if let Err(e) = recover_tx
-                                        .send(submission_event_to_transaction(event))
+                                        .send(submission_event_to_transaction(
+                                            event,
+                                            log.block_number.expect("block number exist").as_u64(),
+                                        ))
                                         .and_then(|_| match sync_progress {
                                             Some(b) => recover_tx.send(b),
                                             None => Ok(()),
@@ -289,11 +306,14 @@ impl LogEntryFetcher {
         executor: &TaskExecutor,
         block_hash_cache: Arc<RwLock<BTreeMap<u64, Option<BlockHashAndSubmissionIndex>>>>,
         watch_loop_wait_time_ms: u64,
+        mut watch_progress_rx: UnboundedReceiver<u64>,
     ) -> UnboundedReceiver<LogFetchProgress> {
         let (watch_tx, watch_rx) = tokio::sync::mpsc::unbounded_channel();
-        let contract = ZgsFlow::new(self.contract_address, self.provider.clone());
+        let contract = self.flow_contract();
         let provider = self.provider.clone();
         let confirmation_delay = self.confirmation_delay;
+        let log_page_size = self.log_page_size;
+        let mut progress_reset_history = BTreeMap::new();
         executor.spawn(
             async move {
                 debug!("start_watch starts, start={}", start_block_number);
@@ -301,6 +321,17 @@ impl LogEntryFetcher {
                 let mut parent_block_hash = parent_block_hash;
 
                 loop {
+                    check_watch_process(
+                        &mut watch_progress_rx,
+                        &mut progress,
+                        &mut parent_block_hash,
+                        &mut progress_reset_history,
+                        watch_loop_wait_time_ms,
+                        &block_hash_cache,
+                        provider.as_ref(),
+                    )
+                    .await;
+
                     match Self::watch_loop(
                         provider.as_ref(),
                         progress,
@@ -309,6 +340,7 @@ impl LogEntryFetcher {
                         confirmation_delay,
                         &contract,
                         &block_hash_cache,
+                        log_page_size,
                     )
                     .await
                     {
@@ -344,6 +376,7 @@ impl LogEntryFetcher {
         confirmation_delay: u64,
         contract: &ZgsFlow<Provider<RetryClient<Http>>>,
         block_hash_cache: &Arc<RwLock<BTreeMap<u64, Option<BlockHashAndSubmissionIndex>>>>,
+        log_page_size: u64,
     ) -> Result<Option<(u64, H256, Option<Option<u64>>)>> {
         let latest_block_number = provider.get_block_number().await?.as_u64();
         debug!(
@@ -365,6 +398,10 @@ impl LogEntryFetcher {
                 from_block_number,
                 block.number
             );
+        }
+
+        if block.logs_bloom.is_none() {
+            bail!("block {:?} logs bloom is none", block.number);
         }
 
         if from_block_number > 0 && block.parent_hash != parent_block_hash {
@@ -395,13 +432,22 @@ impl LogEntryFetcher {
                     block.number
                 );
             }
-            if Some(block.parent_hash) != parent_block_hash {
+            if parent_block_hash.is_none() || Some(block.parent_hash) != parent_block_hash {
                 bail!(
                     "parent block hash mismatch, expected {:?}, actual {}",
                     parent_block_hash,
                     block.parent_hash
                 );
             }
+
+            if block_number == to_block_number && block.hash.is_none() {
+                bail!("block {:?} hash is none", block.number);
+            }
+
+            if block.logs_bloom.is_none() {
+                bail!("block {:?} logs bloom is none", block.number);
+            }
+
             parent_block_hash = block.hash;
             blocks.insert(block_number, block);
         }
@@ -412,8 +458,11 @@ impl LogEntryFetcher {
             .to_block(to_block_number)
             .address(contract.address().into())
             .filter;
+        let mut stream = LogQuery::new(provider, &filter, Duration::from_millis(10))
+            .with_page_size(log_page_size);
         let mut block_logs: BTreeMap<u64, Vec<Log>> = BTreeMap::new();
-        for log in provider.get_logs(&filter).await? {
+        while let Some(maybe_log) = stream.next().await {
+            let log = maybe_log?;
             let block_number = log
                 .block_number
                 .ok_or_else(|| anyhow!("block number missing"))?
@@ -450,7 +499,7 @@ impl LogEntryFetcher {
                         }
 
                         let tx = txs_hm[&log.transaction_index];
-                        if log.transaction_hash != Some(tx.hash) {
+                        if log.transaction_hash.is_none() || log.transaction_hash != Some(tx.hash) {
                             warn!(
                             "log tx hash mismatch, log transaction {:?}, block transaction {:?}",
                             log.transaction_hash,
@@ -458,7 +507,9 @@ impl LogEntryFetcher {
                         );
                             return Ok(progress);
                         }
-                        if log.transaction_index != tx.transaction_index {
+                        if log.transaction_index.is_none()
+                            || log.transaction_index != tx.transaction_index
+                        {
                             warn!(
                             "log tx index mismatch, log tx index {:?}, block transaction index {:?}",
                             log.transaction_index,
@@ -487,8 +538,11 @@ impl LogEntryFetcher {
                             first_submission_index = Some(submit_filter.submission_index.as_u64());
                         }
 
-                        log_events.push(submission_event_to_transaction(submit_filter));
+                        log_events
+                            .push(submission_event_to_transaction(submit_filter, block_number));
                     }
+
+                    info!("synced {} events", log_events.len());
                 }
 
                 let new_progress = if block.hash.is_some() && block.number.is_some() {
@@ -500,18 +554,27 @@ impl LogEntryFetcher {
                 } else {
                     None
                 };
-                if let Some(p) = &new_progress {
-                    if let Err(e) = watch_tx.send(LogFetchProgress::SyncedBlock(*p)) {
-                        warn!("send LogFetchProgress failed: {:?}", e);
-                        return Ok(progress);
-                    } else {
-                        block_hash_cache.write().await.insert(p.0, None);
-                    }
-                }
                 for log in log_events.into_iter() {
                     if let Err(e) = watch_tx.send(log) {
-                        warn!("send log failed: {:?}", e);
+                        warn!("send LogFetchProgress::Transaction failed: {:?}", e);
                         return Ok(progress);
+                    }
+                }
+
+                if let Some(p) = &new_progress {
+                    if let Err(e) = watch_tx.send(LogFetchProgress::SyncedBlock(*p)) {
+                        warn!("send LogFetchProgress::SyncedBlock failed: {:?}", e);
+                        return Ok(progress);
+                    } else {
+                        let mut cache = block_hash_cache.write().await;
+                        match cache.get(&p.0) {
+                            Some(Some(v))
+                                if v.block_hash == p.1
+                                    && v.first_submission_index == p.2.unwrap() => {}
+                            _ => {
+                                cache.insert(p.0, None);
+                            }
+                        }
                     }
                 }
                 progress = new_progress;
@@ -524,6 +587,108 @@ impl LogEntryFetcher {
     pub fn provider(&self) -> &Provider<RetryClient<Http>> {
         self.provider.as_ref()
     }
+
+    pub fn flow_contract(&self) -> ZgsFlow<Provider<RetryClient<Http>>> {
+        ZgsFlow::new(self.contract_address, self.provider.clone())
+    }
+}
+
+async fn check_watch_process(
+    watch_progress_rx: &mut UnboundedReceiver<u64>,
+    progress: &mut u64,
+    parent_block_hash: &mut H256,
+    progress_reset_history: &mut BTreeMap<u64, (Instant, usize)>,
+    watch_loop_wait_time_ms: u64,
+    block_hash_cache: &Arc<RwLock<BTreeMap<u64, Option<BlockHashAndSubmissionIndex>>>>,
+    provider: &Provider<RetryClient<Http>>,
+) {
+    let mut min_received_progress = None;
+    while let Ok(v) = watch_progress_rx.try_recv() {
+        min_received_progress = match min_received_progress {
+            Some(min) if min > v => Some(v),
+            None => Some(v),
+            _ => min_received_progress,
+        };
+    }
+
+    let mut reset = false;
+    if let Some(v) = min_received_progress {
+        if *progress <= v {
+            error!(
+                "received unexpected progress, current {}, received {}",
+                *progress, v
+            );
+            return;
+        }
+
+        let now = Instant::now();
+        match progress_reset_history.get_mut(&v) {
+            Some((last_update, counter)) => {
+                if *counter >= 3 {
+                    error!("maximum reset attempts have been reached.");
+                    watch_progress_rx.close();
+                    return;
+                }
+
+                if now.duration_since(*last_update)
+                    >= Duration::from_millis(watch_loop_wait_time_ms * 30)
+                {
+                    info!("reset to progress from {} to {}", *progress, v);
+                    *progress = v;
+                    *last_update = now;
+                    *counter += 1;
+                    reset = true;
+                }
+            }
+            None => {
+                info!("reset to progress from {} to {}", *progress, v);
+                *progress = v;
+                progress_reset_history.insert(v, (now, 1usize));
+                reset = true;
+            }
+        }
+    }
+
+    if reset {
+        *parent_block_hash = loop {
+            if let Some(block) = block_hash_cache.read().await.get(&(*progress - 1)) {
+                if let Some(v) = block {
+                    break v.block_hash;
+                } else {
+                    debug!(
+                        "block_hash_cache wait for SyncedBlock processed for {}",
+                        *progress - 1
+                    );
+                    tokio::time::sleep(Duration::from_secs(RETRY_WAIT_MS)).await;
+                }
+            } else {
+                warn!(
+                    "get block hash for block {} from RPC, assume there is no org",
+                    *progress - 1
+                );
+                let hash = loop {
+                    match provider.get_block(*progress - 1).await {
+                        Ok(Some(v)) => {
+                            break v.hash.expect("parent block hash expect exist");
+                        }
+                        Ok(None) => {
+                            panic!("parent block {} expect exist", *progress - 1);
+                        }
+                        Err(e) => {
+                            if e.to_string().contains("server is too busy") {
+                                warn!("server busy, wait for parent block {}", *progress - 1);
+                            } else {
+                                panic!("parent block {} expect exist, error {}", *progress - 1, e);
+                            }
+                        }
+                    }
+                };
+                break hash;
+            }
+        };
+    }
+
+    progress_reset_history.retain(|k, _| k + 1000 >= *progress);
 }
 
 async fn revert_one_block(
@@ -579,35 +744,38 @@ async fn revert_one_block(
 #[derive(Debug)]
 pub enum LogFetchProgress {
     SyncedBlock((u64, H256, Option<Option<u64>>)),
-    Transaction(KVTransaction),
+    Transaction((KVTransaction, u64)),
     Reverted(u64),
 }
 
-fn submission_event_to_transaction(e: SubmitFilter) -> LogFetchProgress {
-    LogFetchProgress::Transaction(KVTransaction {
-        metadata: KVMetadata {
-            stream_ids: submission_topic_to_stream_ids(e.submission.tags.to_vec()),
-            sender: e.sender,
+fn submission_event_to_transaction(e: SubmitFilter, block_number: u64) -> LogFetchProgress {
+    LogFetchProgress::Transaction((
+        KVTransaction {
+            metadata: KVMetadata {
+                stream_ids: submission_topic_to_stream_ids(e.submission.tags.to_vec()),
+                sender: e.sender,
+            },
+            transaction: Transaction {
+                data: vec![],
+                stream_ids: vec![],
+                data_merkle_root: nodes_to_root(&e.submission.nodes),
+                merkle_nodes: e
+                    .submission
+                    .nodes
+                    .iter()
+                    // the submission height is the height of the root node starting from height 0.
+                    .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
+                    .collect(),
+                start_entry_index: e.start_pos.as_u64(),
+                size: e.submission.length.as_u64(),
+                seq: e.submission_index.as_u64(),
+            },
         },
-        transaction: Transaction {
-            data: vec![],
-            stream_ids: vec![],
-            data_merkle_root: nodes_to_root(&e.submission.nodes),
-            merkle_nodes: e
-                .submission
-                .nodes
-                .iter()
-                // the submission height is the height of the root node starting from height 0.
-                .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
-                .collect(),
-            start_entry_index: e.start_pos.as_u64(),
-            size: e.submission.length.as_u64(),
-            seq: e.submission_index.as_u64(),
-        },
-    })
+        block_number,
+    ))
 }
 
-fn nodes_to_root(node_list: &Vec<SubmissionNode>) -> DataRoot {
+fn nodes_to_root(node_list: &[SubmissionNode]) -> DataRoot {
     let mut root: DataRoot = node_list.last().expect("not empty").root.into();
     for next_node in node_list[..node_list.len() - 1].iter().rev() {
         root = Sha3Algorithm::parent(&next_node.root.into(), &root);

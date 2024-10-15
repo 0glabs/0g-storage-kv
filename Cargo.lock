@@ -4513,6 +4513,8 @@ dependencies = [
  "futures-util",
  "jsonrpsee",
  "kv_types",
+ "lazy_static",
+ "metrics",
  "serde_json",
  "shared_types",
  "storage",

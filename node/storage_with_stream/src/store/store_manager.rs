@@ -8,6 +8,7 @@ use shared_types::{
 };
 use std::path::Path;
 use std::sync::Arc;
+
 use storage::log_store::config::Configurable;
 use storage::log_store::log_manager::LogConfig;
 use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
@@ -84,14 +85,18 @@ impl LogStoreWrite for StoreManager {
 
     fn validate_and_insert_range_proof(
         &mut self,
-        _tx_seq: u64,
-        _data: &ChunkArrayWithProof,
+        tx_seq: u64,
+        data: &ChunkArrayWithProof,
     ) -> storage::error::Result<bool> {
-        Ok(true)
+        self.log_store.validate_and_insert_range_proof(tx_seq, data)
     }
 
     fn delete_block_hash_by_number(&self, block_number: u64) -> Result<()> {
         self.log_store.delete_block_hash_by_number(block_number)
+    }
+
+    fn put_log_latest_block_number(&self, block_number: u64) -> Result<()> {
+        self.log_store.put_log_latest_block_number(block_number)
     }
 }
 
@@ -216,6 +221,10 @@ impl LogStoreRead for StoreManager {
 
     fn get_context(&self) -> Result<(DataRoot, u64)> {
         self.log_store.get_context()
+    }
+
+    fn get_log_latest_block_number(&self) -> storage::error::Result<Option<u64>> {
+        self.log_store.get_log_latest_block_number()
     }
 }
 

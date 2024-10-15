@@ -23,3 +23,4 @@ shared_types = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "3f
 task_executor = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "3fc1543fb4a1b9321cf5ecc9a81e152a14950995" }
 storage = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "3fc1543fb4a1b9321cf5ecc9a81e152a14950995", package = "storage" }
 contract-interface = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "3fc1543fb4a1b9321cf5ecc9a81e152a14950995" }
+metrics = { git = "https://github.com/Conflux-Chain/conflux-rust.git", rev = "992ebc5483d937c8f6b883e266f8ed2a67a7fa9a" }

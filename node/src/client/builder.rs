@@ -133,7 +133,7 @@ impl ClientBuilder {
     pub async fn with_log_sync(mut self, config: LogSyncConfig) -> Result<Self, String> {
         let executor = require!("log_sync", self, runtime_context).clone().executor;
         let store = require!("log_sync", self, store).clone();
-        let send = LogSyncManager::spawn(config, executor, store)
+        let (send, _) = LogSyncManager::spawn(config, executor, store)
             .await
             .map_err(|e| e.to_string())?;
         self.log_sync = Some(LogSyncComponents { send });

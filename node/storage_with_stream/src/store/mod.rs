@@ -64,7 +64,8 @@ pub trait LogStoreRead: LogStoreChunkRead {
     fn get_proof_at_root(&self, root: &DataRoot, index: u64, length: u64)
         -> Result<FlowRangeProof>;
 
-    /// Return flow root and length.
+    fn get_log_latest_block_number(&self) -> Result<Option<u64>>;
+
     fn get_context(&self) -> Result<(DataRoot, u64)>;
 }
 
@@ -98,6 +99,8 @@ pub trait LogStoreWrite: LogStoreChunkWrite {
     ) -> Result<bool>;
 
     fn delete_block_hash_by_number(&self, block_number: u64) -> Result<()>;
+
+    fn put_log_latest_block_number(&self, block_number: u64) -> Result<()>;
 }
 
 pub trait Store:
