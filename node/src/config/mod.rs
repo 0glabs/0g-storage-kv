@@ -12,19 +12,21 @@ build_config! {
     (blockchain_rpc_endpoint, (String), "http://127.0.0.1:8545".to_string())
     (log_contract_address, (String), "".to_string())
     (log_sync_start_block_number, (u64), 0)
-    (confirmation_block_count, (u64), 12)
-    (log_page_size, (u64), 1000)
+    (force_log_sync_from_start_block_number, (bool), false)
+    (confirmation_block_count, (u64), 3)
+    (log_page_size, (u64), 999)
     (max_cache_data_size, (usize), 100 * 1024 * 1024) // 100 MB
     (cache_tx_seq_ttl, (usize), 500)
 
     (rate_limit_retries, (u32), 100)
     (timeout_retries, (u32), 100)
     (initial_backoff, (u64), 500)
-    (recover_query_delay, (u64), 500)
+    (recover_query_delay, (u64), 50)
 
     (default_finalized_block_count, (u64), 100)
     (remove_finalized_block_interval_minutes, (u64), 30)
     (watch_loop_wait_time_ms, (u64), 500)
+
 
     // rpc
     (rpc_enabled, (bool), true)
