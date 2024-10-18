@@ -277,6 +277,7 @@ impl LogEntryFetcher {
                                         })
                                     {
                                         error!("send error: e={:?}", e);
+                                        break;
                                     }
                                 }
                                 Err(e) => {
