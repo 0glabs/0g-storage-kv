@@ -10,14 +10,12 @@ use ethers::providers::{HttpRateLimitRetryPolicy, RetryClient, RetryClientBuilde
 use ethers::types::{Block, Log, H256};
 use futures::StreamExt;
 use jsonrpsee::tracing::{debug, error, info, warn};
-use kv_types::{submission_topic_to_stream_ids, KVMetadata, KVTransaction};
 use shared_types::{DataRoot, Transaction};
 use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
-use storage_with_stream::Store;
+use storage::log_store::{tx_store::BlockHashAndSubmissionIndex, Store};
 use task_executor::TaskExecutor;
 use tokio::{
     sync::{
@@ -127,7 +125,7 @@ impl LogEntryFetcher {
     pub fn start_remove_finalized_block_task(
         &self,
         executor: &TaskExecutor,
-        store: Arc<RwLock<dyn Store>>,
+        store: Arc<dyn Store>,
         block_hash_cache: Arc<RwLock<BTreeMap<u64, Option<BlockHashAndSubmissionIndex>>>>,
         default_finalized_block_count: u64,
         remove_finalized_block_interval_minutes: u64,
@@ -138,7 +136,7 @@ impl LogEntryFetcher {
                 loop {
                     debug!("processing finalized block");
 
-                    let processed_block_number = match store.read().await.get_sync_progress() {
+                    let processed_block_number = match store.get_sync_progress() {
                         Ok(Some((processed_block_number, _))) => Some(processed_block_number),
                         Ok(None) => None,
                         Err(e) => {
@@ -147,15 +145,14 @@ impl LogEntryFetcher {
                         }
                     };
 
-                    let log_latest_block_number =
-                        match store.read().await.get_log_latest_block_number() {
-                            Ok(Some(b)) => b,
-                            Ok(None) => 0,
-                            Err(e) => {
-                                error!("get log latest block number error: e={:?}", e);
-                                0
-                            }
-                        };
+                    let log_latest_block_number = match store.get_log_latest_block_number() {
+                        Ok(Some(b)) => b,
+                        Ok(None) => 0,
+                        Err(e) => {
+                            error!("get log latest block number error: e={:?}", e);
+                            0
+                        }
+                    };
 
                     if let Some(processed_block_number) = processed_block_number {
                         let finalized_block_number =
@@ -197,8 +194,7 @@ impl LogEntryFetcher {
                             }
 
                             for key in pending_keys.into_iter() {
-                                if let Err(e) = store.write().await.delete_block_hash_by_number(key)
-                                {
+                                if let Err(e) = store.delete_block_hash_by_number(key) {
                                     error!("remove block tx for number {} error: e={:?}", key, e);
                                 } else {
                                     block_hash_cache.write().await.remove(&key);
@@ -745,32 +741,26 @@ async fn revert_one_block(
 #[derive(Debug)]
 pub enum LogFetchProgress {
     SyncedBlock((u64, H256, Option<Option<u64>>)),
-    Transaction((KVTransaction, u64)),
+    Transaction((Transaction, u64)),
     Reverted(u64),
 }
 
 fn submission_event_to_transaction(e: SubmitFilter, block_number: u64) -> LogFetchProgress {
     LogFetchProgress::Transaction((
-        KVTransaction {
-            metadata: KVMetadata {
-                stream_ids: submission_topic_to_stream_ids(e.submission.tags.to_vec()),
-                sender: e.sender,
-            },
-            transaction: Transaction {
-                data: vec![],
-                stream_ids: vec![],
-                data_merkle_root: nodes_to_root(&e.submission.nodes),
-                merkle_nodes: e
-                    .submission
-                    .nodes
-                    .iter()
-                    // the submission height is the height of the root node starting from height 0.
-                    .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
-                    .collect(),
-                start_entry_index: e.start_pos.as_u64(),
-                size: e.submission.length.as_u64(),
-                seq: e.submission_index.as_u64(),
-            },
+        Transaction {
+            stream_ids: vec![],
+            data: vec![],
+            data_merkle_root: nodes_to_root(&e.submission.nodes),
+            merkle_nodes: e
+                .submission
+                .nodes
+                .iter()
+                // the submission height is the height of the root node starting from height 0.
+                .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
+                .collect(),
+            start_entry_index: e.start_pos.as_u64(),
+            size: e.submission.length.as_u64(),
+            seq: e.submission_index.as_u64(),
         },
         block_number,
     ))

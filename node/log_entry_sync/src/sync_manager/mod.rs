@@ -1,19 +1,19 @@
 use crate::sync_manager::config::LogSyncConfig;
+use crate::sync_manager::data_cache::DataCache;
 use crate::sync_manager::log_entry_fetcher::{LogEntryFetcher, LogFetchProgress};
 use anyhow::{anyhow, bail, Result};
 use ethereum_types::H256;
 use ethers::{prelude::Middleware, types::BlockNumber};
 use futures::FutureExt;
 use jsonrpsee::tracing::{debug, error, warn};
-use kv_types::KVTransaction;
-use shared_types::Transaction;
+use shared_types::{bytes_to_chunks, ChunkArray, Transaction};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::future::Future;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
-use storage_with_stream::Store;
+use storage::log_store::log_manager::PORA_CHUNK_SIZE;
+use storage::log_store::{tx_store::BlockHashAndSubmissionIndex, Store};
 use task_executor::{ShutdownReason, TaskExecutor};
 use thiserror::Error;
 use tokio::sync::broadcast;
@@ -51,7 +51,8 @@ pub enum LogSyncEvent {
 pub struct LogSyncManager {
     config: LogSyncConfig,
     log_fetcher: LogEntryFetcher,
-    store: Arc<RwLock<dyn Store>>,
+    store: Arc<dyn Store>,
+    data_cache: DataCache,
 
     next_tx_seq: u64,
 
@@ -65,9 +66,9 @@ impl LogSyncManager {
     pub async fn spawn(
         config: LogSyncConfig,
         executor: TaskExecutor,
-        store: Arc<RwLock<dyn Store>>,
+        store: Arc<dyn Store>,
     ) -> Result<(broadcast::Sender<LogSyncEvent>, oneshot::Receiver<()>)> {
-        let next_tx_seq = store.read().await.next_tx_seq();
+        let next_tx_seq = store.next_tx_seq();
 
         let executor_clone = executor.clone();
         let mut shutdown_sender = executor.shutdown_sender();
@@ -95,11 +96,10 @@ impl LogSyncManager {
                         config.initial_backoff,
                     )
                     .await?;
+                    let data_cache = DataCache::new(config.cache_config.clone());
 
                     let block_hash_cache = Arc::new(RwLock::new(
                         store
-                            .read()
-                            .await
                             .get_block_hashes()?
                             .into_iter()
                             .map(|(x, y)| (x, Some(y)))
@@ -110,6 +110,7 @@ impl LogSyncManager {
                         log_fetcher,
                         next_tx_seq,
                         store,
+                        data_cache,
                         event_send,
                         block_hash_cache,
                     };
@@ -151,7 +152,7 @@ impl LogSyncManager {
                         );
                         log_sync_manager.handle_data(reorg_rx, &None).await?;
                         if let Some((block_number, block_hash)) =
-                            log_sync_manager.store.read().await.get_sync_progress()?
+                            log_sync_manager.store.get_sync_progress()?
                         {
                             start_block_number = block_number;
                             start_block_hash = block_hash;
@@ -299,9 +300,9 @@ impl LogSyncManager {
         Ok((event_send_cloned, catch_up_end_receiver))
     }
 
-    async fn put_tx(&mut self, tx: KVTransaction) -> Option<bool> {
+    async fn put_tx(&mut self, tx: Transaction) -> Option<bool> {
         // We call this after process chain reorg, so the sequence number should match.
-        match tx.transaction.seq.cmp(&self.next_tx_seq) {
+        match tx.seq.cmp(&self.next_tx_seq) {
             std::cmp::Ordering::Less => Some(true),
             std::cmp::Ordering::Equal => {
                 debug!("log entry sync get entry: {:?}", tx);
@@ -310,7 +311,7 @@ impl LogSyncManager {
             std::cmp::Ordering::Greater => {
                 error!(
                     "Unexpected transaction seq: next={} get={}",
-                    self.next_tx_seq, tx.transaction.seq
+                    self.next_tx_seq, tx.seq
                 );
                 None
             }
@@ -320,17 +321,32 @@ impl LogSyncManager {
     /// `tx_seq` is the first reverted tx seq.
     async fn process_reverted(&mut self, tx_seq: u64) {
         warn!("revert for chain reorg: seq={}", tx_seq);
+        {
+            let store = self.store.clone();
+            for seq in tx_seq..self.next_tx_seq {
+                if matches!(store.check_tx_completed(seq), Ok(true)) {
+                    if let Ok(Some(tx)) = store.get_tx_by_seq_number(seq) {
+                        // TODO(zz): Skip reading the rear padding data?
+                        if let Ok(Some(data)) =
+                            store.get_chunks_by_tx_and_index_range(seq, 0, tx.num_entries())
+                        {
+                            if !self
+                                .data_cache
+                                .add_data(tx.data_merkle_root, seq, data.data)
+                            {
+                                // TODO(zz): Data too large. Save to disk?
+                                warn!("large reverted data dropped for tx={:?}", tx);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         let _ = self.event_send.send(LogSyncEvent::ReorgDetected { tx_seq });
 
         // TODO(zz): `wrapping_sub` here is a hack to handle the case of tx_seq=0.
-        if let Err(e) = self
-            .store
-            .write()
-            .await
-            .revert_stream(tx_seq.wrapping_sub(1))
-            .await
-        {
+        if let Err(e) = self.store.revert_to(tx_seq.wrapping_sub(1)) {
             error!("revert_to fails: e={:?}", e);
             return;
         }
@@ -345,7 +361,7 @@ impl LogSyncManager {
         watch_progress_tx: &Option<UnboundedSender<u64>>,
     ) -> Result<(), HandleDataError> {
         let mut log_latest_block_number =
-            if let Some(block_number) = self.store.read().await.get_log_latest_block_number()? {
+            if let Some(block_number) = self.store.get_log_latest_block_number()? {
                 block_number
             } else {
                 0
@@ -369,7 +385,7 @@ impl LogSyncManager {
                         );
                     }
 
-                    self.store.write().await.put_sync_progress((
+                    self.store.put_sync_progress((
                         block_number,
                         block_hash,
                         first_submission_index,
@@ -395,12 +411,7 @@ impl LogSyncManager {
                     match self.put_tx(tx.clone()).await {
                         Some(false) => stop = true,
                         Some(true) => {
-                            if let Err(e) = self
-                                .store
-                                .write()
-                                .await
-                                .put_log_latest_block_number(block_number)
-                            {
+                            if let Err(e) = self.store.put_log_latest_block_number(block_number) {
                                 warn!("failed to put log latest block number, error={:?}", e);
                             }
 
@@ -424,6 +435,12 @@ impl LogSyncManager {
                         // Unexpected error.
                         return Err(anyhow!("log sync write error").into());
                     }
+                    if let Err(e) = self.event_send.send(LogSyncEvent::TxSynced { tx }) {
+                        // TODO: Do we need to wait until all receivers are initialized?
+                        // Auto-sync and txpool may need this event, but it's possible that
+                        // no receivers will be created.
+                        warn!("log sync broadcast error, error={:?}", e);
+                    }
                 }
                 LogFetchProgress::Reverted(reverted) => {
                     self.process_reverted(reverted).await;
@@ -433,22 +450,72 @@ impl LogSyncManager {
         Ok(())
     }
 
-    async fn put_tx_inner(&mut self, tx: KVTransaction) -> bool {
+    async fn put_tx_inner(&mut self, tx: Transaction) -> bool {
         let start_time = Instant::now();
-        let result = self.store.write().await.put_tx(tx.clone());
+        let result = self.store.put_tx(tx.clone());
         metrics::STORE_PUT_TX.update_since(start_time);
 
         if let Err(e) = result {
             error!("put_tx error: e={:?}", e);
             false
         } else {
+            if let Some(data) = self.data_cache.pop_data(&tx.data_merkle_root) {
+                let store = self.store.clone();
+                // We are holding a mutable reference of LogSyncManager, so no chain reorg is
+                // possible after put_tx.
+                if let Err(e) = store
+                    .put_chunks_with_tx_hash(
+                        tx.seq,
+                        tx.hash(),
+                        ChunkArray {
+                            data,
+                            start_index: 0,
+                        },
+                        None,
+                    )
+                    .and_then(|_| store.finalize_tx_with_hash(tx.seq, tx.hash()))
+                {
+                    error!("put_tx data error: e={:?}", e);
+                    return false;
+                }
+            } else {
+                // check if current node need to save at least one segment
+                let store = self.store.clone();
+                let shard_config = store.get_shard_config();
+                let start_segment_index = tx.start_entry_index as usize / PORA_CHUNK_SIZE;
+                let end_segment_index =
+                    (tx.start_entry_index as usize + bytes_to_chunks(tx.size as usize) - 1)
+                        / PORA_CHUNK_SIZE;
+                let mut can_finalize = false;
+                if end_segment_index < shard_config.shard_id {
+                    can_finalize = true;
+                } else {
+                    // check if there is a number N between [start_segment_index, end_segment_index] that satisfy:
+                    // N % num_shard = shard_id
+                    let min_n_gte_start =
+                        (start_segment_index + shard_config.num_shard - 1 - shard_config.shard_id)
+                            / shard_config.num_shard;
+                    let max_n_lte_end =
+                        (end_segment_index - shard_config.shard_id) / shard_config.num_shard;
+                    if min_n_gte_start > max_n_lte_end {
+                        can_finalize = true;
+                    }
+                }
+                if can_finalize {
+                    if let Err(e) = store.finalize_tx_with_hash(tx.seq, tx.hash()) {
+                        error!("finalize file that does not need to store: e={:?}", e);
+                        return false;
+                    }
+                }
+            }
+            self.data_cache.garbage_collect(self.next_tx_seq);
             self.next_tx_seq += 1;
 
             // Check if the computed data root matches on-chain state.
             // If the call fails, we won't check the root here and return `true` directly.
             let flow_contract = self.log_fetcher.flow_contract();
             match flow_contract
-                .get_flow_root_by_tx_seq(tx.transaction.seq.into())
+                .get_flow_root_by_tx_seq(tx.seq.into())
                 .call()
                 .await
             {
@@ -456,7 +523,7 @@ impl LogSyncManager {
                     let contract_root = H256::from_slice(&contract_root_bytes);
                     // contract_root is zero for tx submitted before upgrading.
                     if !contract_root.is_zero() {
-                        match self.store.read().await.get_context() {
+                        match self.store.get_context() {
                             Ok((local_root, _)) => {
                                 if contract_root != local_root {
                                     error!(
@@ -535,12 +602,7 @@ async fn get_start_block_number_with_hash(
         return Ok((block_number, block_hash));
     }
 
-    if let Some(block_number) = log_sync_manager
-        .store
-        .read()
-        .await
-        .get_log_latest_block_number()?
-    {
+    if let Some(block_number) = log_sync_manager.store.get_log_latest_block_number()? {
         if let Some(Some(val)) = log_sync_manager
             .block_hash_cache
             .read()
@@ -555,16 +617,15 @@ async fn get_start_block_number_with_hash(
         }
     }
 
-    let (start_block_number, start_block_hash) =
-        match log_sync_manager.store.read().await.get_sync_progress()? {
-            // No previous progress, so just use config.
-            None => {
-                let block_number = log_sync_manager.config.start_block_number;
-                let block_hash = log_sync_manager.get_block(block_number.into()).await?.1;
-                (block_number, block_hash)
-            }
-            Some((block_number, block_hash)) => (block_number, block_hash),
-        };
+    let (start_block_number, start_block_hash) = match log_sync_manager.store.get_sync_progress()? {
+        // No previous progress, so just use config.
+        None => {
+            let block_number = log_sync_manager.config.start_block_number;
+            let block_hash = log_sync_manager.get_block(block_number.into()).await?.1;
+            (block_number, block_hash)
+        }
+        Some((block_number, block_hash)) => (block_number, block_hash),
+    };
 
     Ok((start_block_number, start_block_hash))
 }
@@ -587,6 +648,7 @@ where
 }
 
 pub(crate) mod config;
+mod data_cache;
 mod log_entry_fetcher;
 mod log_query;
 mod metrics;
