@@ -7,14 +7,17 @@ use ethereum_types::H256;
 use http::Uri;
 use log_entry_sync::{CacheConfig, ContractAddress, LogSyncConfig};
 use rpc::RPCConfig;
-use storage_with_stream::{LogStorageConfig, StorageConfig};
+use storage_with_stream::{log_store::log_manager::LogConfig, LogStorageConfig, StorageConfig};
 use stream::StreamConfig;
 
 impl ZgsKVConfig {
     pub fn storage_config(&self) -> Result<StorageConfig, String> {
+        let mut log_config = LogConfig::default();
+        log_config.flow.merkle_node_cache_capacity = self.merkle_node_cache_capacity;
         Ok(StorageConfig {
             log_config: LogStorageConfig {
                 db_dir: self.db_dir.clone().into(),
+                log_config,
             },
             kv_db_file: self.kv_db_file.clone().into(),
         })

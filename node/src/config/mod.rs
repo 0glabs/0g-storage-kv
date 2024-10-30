@@ -40,6 +40,8 @@ build_config! {
 
     // db
     (db_dir, (String), "db".to_string())
+    (merkle_node_cache_capacity, (usize), 32 * 1024 * 1024)
+
     (kv_db_file, (String), "kv.DB".to_string())
 
     // misc
