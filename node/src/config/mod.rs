@@ -27,6 +27,8 @@ build_config! {
     (remove_finalized_block_interval_minutes, (u64), 30)
     (watch_loop_wait_time_ms, (u64), 500)
 
+    (blockchain_rpc_timeout_secs, (u64), 120)
+
 
     // rpc
     (rpc_enabled, (bool), true)

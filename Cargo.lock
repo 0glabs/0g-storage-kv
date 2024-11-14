@@ -4534,6 +4534,7 @@ dependencies = [
  "kv_types",
  "lazy_static",
  "metrics 0.1.0 (git+https://github.com/Conflux-Chain/conflux-rust.git?rev=992ebc5483d937c8f6b883e266f8ed2a67a7fa9a)",
+ "reqwest",
  "serde_json",
  "shared_types",
  "storage",
@@ -4541,6 +4542,7 @@ dependencies = [
  "task_executor",
  "thiserror",
  "tokio",
+ "url",
 ]
 
 [[package]]
