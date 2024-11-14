@@ -5,7 +5,6 @@ use ethereum_types::{H160, H256};
 use kv_types::{AccessControlSet, KVTransaction, KeyValuePair, StreamWriteSet};
 use shared_types::ChunkArray;
 
-
 use shared_types::FlowProof;
 
 use storage::log_store::tx_store::BlockHashAndSubmissionIndex;

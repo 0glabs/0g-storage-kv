@@ -9,11 +9,10 @@ use storage::{
     log_store::{
         log_manager::{bytes_to_entries, ENTRY_SIZE, PORA_CHUNK_SIZE},
         tx_store::BlockHashAndSubmissionIndex,
-    }, H256,
+    },
+    H256,
 };
 use tracing::{debug, instrument, trace};
-
-
 
 use super::{
     flow_store::{batch_iter, FlowStore},
@@ -21,10 +20,10 @@ use super::{
 };
 
 pub const COL_TX: u32 = 0;
-pub const COL_ENTRY_BATCH: u32 = 1; 
-pub const COL_TX_COMPLETED: u32 = 2; 
+pub const COL_ENTRY_BATCH: u32 = 1;
+pub const COL_TX_COMPLETED: u32 = 2;
 pub const COL_MISC: u32 = 3;
-pub const COL_BLOCK_PROGRESS: u32 = 4; 
+pub const COL_BLOCK_PROGRESS: u32 = 4;
 pub const COL_NUM: u32 = 5;
 
 pub struct DataStore {

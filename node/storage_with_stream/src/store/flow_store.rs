@@ -2,8 +2,7 @@ use std::{cmp, sync::Arc};
 
 use anyhow::{anyhow, bail, Result};
 
-
-use shared_types::{ChunkArray};
+use shared_types::ChunkArray;
 use ssz::{Decode, Encode};
 use storage::{
     error::Error,
@@ -19,7 +18,7 @@ use crate::try_option;
 
 use super::data_store::COL_ENTRY_BATCH;
 
-pub const ENTRY_BATCH_SIZE: usize = 16 * 1024;
+pub const ENTRY_BATCH_SIZE: usize = 1024;
 
 fn try_decode_usize(data: &[u8]) -> Result<usize> {
     Ok(usize::from_be_bytes(
@@ -120,8 +119,13 @@ impl FlowStore {
             let mut batch = self
                 .get_entry_batch(chunk_index)?
                 .unwrap_or_else(EntryBatchData::new);
+            let start_byte = (chunk.start_index % ENTRY_BATCH_SIZE as u64) as usize * ENTRY_SIZE;
+            // check data existance
+            if chunk.data.is_empty() || batch.get(start_byte, chunk.data.len()).is_some() {
+                continue;
+            }
             batch.insert_data(
-                (chunk.start_index % ENTRY_BATCH_SIZE as u64) as usize,
+                (chunk.start_index % ENTRY_BATCH_SIZE as u64) as usize * ENTRY_SIZE,
                 chunk.data,
             )?;
 
@@ -154,8 +158,9 @@ impl FlowStore {
             }
 
             let entry_batch = try_option!(self.get_entry_batch(chunk_index)?);
-            let entry_batch_data =
-                try_option!(entry_batch.get(offset as usize, length as usize));
+            let entry_batch_data = try_option!(
+                entry_batch.get(offset as usize * ENTRY_SIZE, length as usize * ENTRY_SIZE)
+            );
             data.append(&mut entry_batch_data.to_vec());
         }
         Ok(Some(ChunkArray {

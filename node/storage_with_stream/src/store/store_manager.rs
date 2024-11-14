@@ -2,12 +2,9 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 use ethereum_types::{H160, H256};
 use kv_types::{AccessControlSet, KVTransaction, KeyValuePair, StreamWriteSet};
-use shared_types::{
-    ChunkArray, FlowProof,
-};
+use shared_types::{ChunkArray, FlowProof};
 use std::path::Path;
 use std::sync::Arc;
-
 
 use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
 use tracing::instrument;

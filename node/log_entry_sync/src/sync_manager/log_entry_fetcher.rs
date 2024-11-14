@@ -11,7 +11,7 @@ use ethers::types::{Block, Log, H256};
 use futures::StreamExt;
 use jsonrpsee::tracing::{debug, error, info, warn};
 use kv_types::{submission_topic_to_stream_ids, KVTransaction};
-use shared_types::{DataRoot};
+use shared_types::DataRoot;
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
