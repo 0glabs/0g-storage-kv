@@ -1,26 +1,20 @@
-use crate::try_option;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use ethereum_types::{H160, H256};
 use kv_types::{AccessControlSet, KVTransaction, KeyValuePair, StreamWriteSet};
 use shared_types::{
-    Chunk, ChunkArray, ChunkArrayWithProof, ChunkWithProof, DataRoot, FlowProof, FlowRangeProof,
+    ChunkArray, FlowProof,
 };
 use std::path::Path;
 use std::sync::Arc;
 
-use storage::log_store::config::Configurable;
-use storage::log_store::log_manager::LogConfig;
+
 use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
-use storage::log_store::{
-    LogStoreChunkRead, LogStoreChunkWrite, LogStoreRead as _, LogStoreWrite as _,
-};
-use storage::LogManager;
 use tracing::instrument;
 
-use super::metadata_store::MetadataStore;
+use super::data_store::DataStore;
 use super::stream_store::StreamStore;
-use super::{LogStoreRead, LogStoreWrite, StreamRead, StreamWrite};
+use super::{DataStoreRead, DataStoreWrite, StreamRead, StreamWrite};
 
 /// 256 Bytes
 pub const ENTRY_SIZE: usize = 256;
@@ -28,14 +22,39 @@ pub const ENTRY_SIZE: usize = 256;
 pub const PORA_CHUNK_SIZE: usize = 1024;
 
 pub struct StoreManager {
-    metadata_store: MetadataStore,
-    log_store: LogManager,
+    data_store: DataStore,
     stream_store: StreamStore,
 }
 
-impl LogStoreChunkWrite for StoreManager {
-    fn put_chunks(&self, tx_seq: u64, chunks: ChunkArray) -> Result<()> {
-        self.log_store.put_chunks(tx_seq, chunks)
+impl DataStoreWrite for StoreManager {
+    #[instrument(skip(self))]
+    fn put_tx(&mut self, tx: KVTransaction) -> Result<()> {
+        self.data_store.put_tx(tx)
+    }
+
+    fn finalize_tx_with_hash(
+        &mut self,
+        tx_seq: u64,
+        tx_hash: H256,
+    ) -> storage::error::Result<bool> {
+        self.data_store.finalize_tx_with_hash(tx_seq, tx_hash)
+    }
+
+    fn put_sync_progress(&self, progress: (u64, H256, Option<Option<u64>>)) -> Result<()> {
+        self.data_store.put_sync_progress(progress)
+    }
+
+    fn revert_to(&mut self, tx_seq: u64) -> Result<()> {
+        self.data_store.revert_to(tx_seq)?;
+        Ok(())
+    }
+
+    fn delete_block_hash_by_number(&self, block_number: u64) -> Result<()> {
+        self.data_store.delete_block_hash_by_number(block_number)
+    }
+
+    fn put_log_latest_block_number(&self, block_number: u64) -> Result<()> {
+        self.data_store.put_log_latest_block_number(block_number)
     }
 
     fn put_chunks_with_tx_hash(
@@ -44,205 +63,39 @@ impl LogStoreChunkWrite for StoreManager {
         tx_hash: H256,
         chunks: ChunkArray,
         maybe_file_proof: Option<FlowProof>,
-    ) -> storage::error::Result<bool> {
-        self.log_store
+    ) -> Result<bool> {
+        self.data_store
             .put_chunks_with_tx_hash(tx_seq, tx_hash, chunks, maybe_file_proof)
     }
-
-    fn remove_chunks_batch(&self, batch_list: &[u64]) -> storage::error::Result<()> {
-        self.log_store.remove_chunks_batch(batch_list)
-    }
 }
 
-impl LogStoreWrite for StoreManager {
-    #[instrument(skip(self))]
-    fn put_tx(&mut self, tx: KVTransaction) -> Result<()> {
-        self.metadata_store
-            .put_metadata(tx.transaction.seq, tx.metadata)?;
-        self.log_store.put_tx(tx.transaction)
-    }
-
-    fn finalize_tx(&mut self, tx_seq: u64) -> Result<()> {
-        self.log_store.finalize_tx(tx_seq)
-    }
-
-    fn finalize_tx_with_hash(
-        &mut self,
-        tx_seq: u64,
-        tx_hash: H256,
-    ) -> storage::error::Result<bool> {
-        self.log_store.finalize_tx_with_hash(tx_seq, tx_hash)
-    }
-
-    fn put_sync_progress(&self, progress: (u64, H256, Option<Option<u64>>)) -> Result<()> {
-        self.log_store.put_sync_progress(progress)
-    }
-
-    fn revert_to(&mut self, tx_seq: u64) -> Result<()> {
-        self.log_store.revert_to(tx_seq)?;
-        Ok(())
-    }
-
-    fn validate_and_insert_range_proof(
-        &mut self,
-        tx_seq: u64,
-        data: &ChunkArrayWithProof,
-    ) -> storage::error::Result<bool> {
-        self.log_store.validate_and_insert_range_proof(tx_seq, data)
-    }
-
-    fn delete_block_hash_by_number(&self, block_number: u64) -> Result<()> {
-        self.log_store.delete_block_hash_by_number(block_number)
-    }
-
-    fn put_log_latest_block_number(&self, block_number: u64) -> Result<()> {
-        self.log_store.put_log_latest_block_number(block_number)
-    }
-}
-
-impl LogStoreChunkRead for StoreManager {
-    fn get_chunk_by_tx_and_index(
-        &self,
-        tx_seq: u64,
-        index: usize,
-    ) -> crate::error::Result<Option<Chunk>> {
-        self.log_store.get_chunk_by_tx_and_index(tx_seq, index)
-    }
-
-    fn get_chunks_by_tx_and_index_range(
-        &self,
-        tx_seq: u64,
-        index_start: usize,
-        index_end: usize,
-    ) -> crate::error::Result<Option<ChunkArray>> {
-        self.log_store
-            .get_chunks_by_tx_and_index_range(tx_seq, index_start, index_end)
-    }
-
-    fn get_chunk_by_data_root_and_index(
-        &self,
-        data_root: &DataRoot,
-        index: usize,
-    ) -> crate::error::Result<Option<Chunk>> {
-        self.log_store
-            .get_chunk_by_data_root_and_index(data_root, index)
-    }
-
-    fn get_chunks_by_data_root_and_index_range(
-        &self,
-        data_root: &DataRoot,
-        index_start: usize,
-        index_end: usize,
-    ) -> crate::error::Result<Option<ChunkArray>> {
-        self.log_store
-            .get_chunks_by_data_root_and_index_range(data_root, index_start, index_end)
-    }
-
-    fn get_chunk_index_list(&self, tx_seq: u64) -> crate::error::Result<Vec<usize>> {
-        self.log_store.get_chunk_index_list(tx_seq)
-    }
-
-    fn get_chunk_by_flow_index(
-        &self,
-        index: u64,
-        length: u64,
-    ) -> crate::error::Result<Option<ChunkArray>> {
-        self.log_store.get_chunk_by_flow_index(index, length)
-    }
-}
-
-impl LogStoreRead for StoreManager {
-    fn get_tx_by_seq_number(&self, seq: u64) -> crate::error::Result<Option<KVTransaction>> {
-        Ok(Some(KVTransaction {
-            transaction: try_option!(self.log_store.get_tx_by_seq_number(seq)?),
-            metadata: try_option!(self.metadata_store.get_metadata_by_seq_number(seq)?),
-        }))
-    }
-
-    fn get_tx_seq_by_data_root(&self, data_root: &DataRoot) -> crate::error::Result<Option<u64>> {
-        self.log_store.get_tx_seq_by_data_root(data_root)
-    }
-
-    fn get_chunk_with_proof_by_tx_and_index(
-        &self,
-        tx_seq: u64,
-        index: usize,
-    ) -> crate::error::Result<Option<ChunkWithProof>> {
-        self.log_store
-            .get_chunk_with_proof_by_tx_and_index(tx_seq, index)
-    }
-
-    fn get_chunks_with_proof_by_tx_and_index_range(
-        &self,
-        tx_seq: u64,
-        index_start: usize,
-        index_end: usize,
-    ) -> crate::error::Result<Option<ChunkArrayWithProof>> {
-        self.log_store.get_chunks_with_proof_by_tx_and_index_range(
-            tx_seq,
-            index_start,
-            index_end,
-            None,
-        )
+impl DataStoreRead for StoreManager {
+    fn get_tx_by_seq_number(&self, seq: u64) -> Result<Option<KVTransaction>> {
+        self.data_store.get_tx_by_seq_number(seq)
     }
 
     fn check_tx_completed(&self, tx_seq: u64) -> crate::error::Result<bool> {
-        self.log_store.check_tx_completed(tx_seq)
-    }
-
-    fn validate_range_proof(&self, tx_seq: u64, data: &ChunkArrayWithProof) -> Result<bool> {
-        self.log_store.validate_range_proof(tx_seq, data)
+        self.data_store.check_tx_completed(tx_seq)
     }
 
     fn get_sync_progress(&self) -> Result<Option<(u64, H256)>> {
-        self.log_store.get_sync_progress()
-    }
-
-    fn get_block_hash_by_number(&self, block_number: u64) -> Result<Option<(H256, Option<u64>)>> {
-        self.log_store.get_block_hash_by_number(block_number)
+        self.data_store.get_sync_progress()
     }
 
     fn get_block_hashes(&self) -> Result<Vec<(u64, BlockHashAndSubmissionIndex)>> {
-        self.log_store.get_block_hashes()
+        self.data_store.get_block_hashes()
     }
 
     fn next_tx_seq(&self) -> u64 {
-        self.log_store.next_tx_seq()
-    }
-
-    fn get_proof_at_root(
-        &self,
-        root: &DataRoot,
-        index: u64,
-        length: u64,
-    ) -> Result<FlowRangeProof> {
-        self.log_store.get_proof_at_root(Some(*root), index, length)
-    }
-
-    fn get_context(&self) -> Result<(DataRoot, u64)> {
-        self.log_store.get_context()
+        self.data_store.next_tx_seq()
     }
 
     fn get_log_latest_block_number(&self) -> storage::error::Result<Option<u64>> {
-        self.log_store.get_log_latest_block_number()
-    }
-}
-
-impl Configurable for StoreManager {
-    fn get_config(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
-        self.log_store.get_config(key)
+        self.data_store.get_log_latest_block_number()
     }
 
-    fn set_config(&self, key: &[u8], value: &[u8]) -> Result<()> {
-        self.log_store.set_config(key, value)
-    }
-
-    fn remove_config(&self, key: &[u8]) -> Result<()> {
-        self.log_store.remove_config(key)
-    }
-
-    fn exec_configs(&self, tx: storage::log_store::config::ConfigTx) -> Result<()> {
-        self.log_store.exec_configs(tx)
+    fn get_chunk_by_flow_index(&self, index: u64, length: u64) -> Result<Option<ChunkArray>> {
+        self.data_store.get_chunk_by_flow_index(index, length)
     }
 }
 
@@ -422,7 +275,7 @@ impl StreamWrite for StoreManager {
         result: String,
         commit_data: Option<(StreamWriteSet, AccessControlSet)>,
     ) -> Result<()> {
-        match self.log_store.get_tx_by_seq_number(tx_seq) {
+        match self.data_store.get_tx_by_seq_number(tx_seq) {
             Ok(Some(tx)) => {
                 if tx.data_merkle_root != data_merkle_root {
                     return Err(Error::msg("data merkle root deos not match"));
@@ -444,36 +297,26 @@ impl StreamWrite for StoreManager {
 
     async fn revert_stream(&mut self, tx_seq: u64) -> Result<()> {
         self.stream_store.revert_to(tx_seq).await?;
-        self.log_store.revert_to(tx_seq)?;
+        self.data_store.revert_to(tx_seq)?;
         Ok(())
     }
 }
 
 impl StoreManager {
-    pub async fn memorydb(
-        config: LogConfig,
-        executor: task_executor::TaskExecutor,
-    ) -> Result<Self> {
+    pub async fn memorydb() -> Result<Self> {
         let stream_store = StreamStore::new_in_memory().await?;
         stream_store.create_tables_if_not_exist().await?;
         Ok(Self {
-            metadata_store: MetadataStore::memorydb(),
-            log_store: LogManager::memorydb(config, executor)?,
+            data_store: DataStore::memorydb(),
             stream_store,
         })
     }
 
-    pub async fn rocks_db(
-        config: LogConfig,
-        path: impl AsRef<Path>,
-        kv_db_file: impl AsRef<Path>,
-        executor: task_executor::TaskExecutor,
-    ) -> Result<Self> {
+    pub async fn rocks_db(path: impl AsRef<Path>, kv_db_file: impl AsRef<Path>) -> Result<Self> {
         let stream_store = StreamStore::new(kv_db_file.as_ref()).await?;
         stream_store.create_tables_if_not_exist().await?;
         Ok(Self {
-            metadata_store: MetadataStore::rocksdb(path.as_ref().join("metadata"))?,
-            log_store: LogManager::rocksdb(config, path.as_ref().join("log"), executor)?,
+            data_store: DataStore::rocksdb(path.as_ref())?,
             stream_store,
         })
     }

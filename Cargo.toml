@@ -16,11 +16,11 @@ enr = { path = "version-meld/enr" }
 discv5 = { path = "version-meld/discv5" }
 
 [workspace.dependencies]
-append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "da2cdec8a1ddfd52333a6c10141df31611d0e1f8" }
-merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "da2cdec8a1ddfd52333a6c10141df31611d0e1f8" }
-merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "da2cdec8a1ddfd52333a6c10141df31611d0e1f8" }
-shared_types = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "da2cdec8a1ddfd52333a6c10141df31611d0e1f8" }
-task_executor = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "da2cdec8a1ddfd52333a6c10141df31611d0e1f8" }
-storage = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "da2cdec8a1ddfd52333a6c10141df31611d0e1f8", package = "storage" }
-contract-interface = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "da2cdec8a1ddfd52333a6c10141df31611d0e1f8" }
+append_merkle = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "e249cbb5ea2570215c8ff46ee1010fffc5233a84" }
+merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "e249cbb5ea2570215c8ff46ee1010fffc5233a84" }
+merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "e249cbb5ea2570215c8ff46ee1010fffc5233a84" }
+shared_types = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "e249cbb5ea2570215c8ff46ee1010fffc5233a84" }
+task_executor = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "e249cbb5ea2570215c8ff46ee1010fffc5233a84" }
+storage = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "e249cbb5ea2570215c8ff46ee1010fffc5233a84", package = "storage" }
+contract-interface = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "e249cbb5ea2570215c8ff46ee1010fffc5233a84" }
 metrics = { git = "https://github.com/Conflux-Chain/conflux-rust.git", rev = "992ebc5483d937c8f6b883e266f8ed2a67a7fa9a" }

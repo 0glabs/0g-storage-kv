@@ -95,10 +95,10 @@ impl<'a> StreamReader<'a> {
         Self {
             store,
             tx,
-            tx_size_in_entry: if tx.transaction.size % ENTRY_SIZE as u64 == 0 {
-                tx.transaction.size / ENTRY_SIZE as u64
+            tx_size_in_entry: if tx.size % ENTRY_SIZE as u64 == 0 {
+                tx.size / ENTRY_SIZE as u64
             } else {
-                tx.transaction.size / ENTRY_SIZE as u64 + 1
+                tx.size / ENTRY_SIZE as u64 + 1
             },
             current_position: 0,
             buffer: vec![],
@@ -106,15 +106,17 @@ impl<'a> StreamReader<'a> {
     }
 
     pub fn current_position_in_bytes(&self) -> u64 {
-        (self.current_position + self.tx.transaction.start_entry_index) * (ENTRY_SIZE as u64)
+        (self.current_position + self.tx.start_entry_index) * (ENTRY_SIZE as u64)
             - (self.buffer.len() as u64)
     }
 
     async fn load(&mut self, length: u64) -> Result<()> {
-        match self.store.read().await.get_chunk_by_flow_index(
-            self.current_position + self.tx.transaction.start_entry_index,
-            length,
-        )? {
+        match self
+            .store
+            .read()
+            .await
+            .get_chunk_by_flow_index(self.current_position + self.tx.start_entry_index, length)?
+        {
             Some(mut x) => {
                 self.buffer.append(&mut x.data);
                 self.current_position += length;
@@ -227,11 +229,7 @@ impl StreamReplayer {
                 .store
                 .read()
                 .await
-                .get_latest_version_before(
-                    stream_read.stream_id,
-                    stream_read.key.clone(),
-                    tx.transaction.seq,
-                )
+                .get_latest_version_before(stream_read.stream_id, stream_read.key.clone(), tx.seq)
                 .await?
                 > version
             {
@@ -290,7 +288,7 @@ impl StreamReplayer {
         tx: &KVTransaction,
         version: u64,
     ) -> Result<Option<ReplayResult>> {
-        let stream_set = HashSet::<H256>::from_iter(tx.metadata.stream_ids.iter().cloned());
+        let stream_set = HashSet::<H256>::from_iter(tx.stream_ids.iter().cloned());
         let store_read = self.store.read().await;
         for stream_write in stream_write_set.stream_writes.iter() {
             if !stream_set.contains(&stream_write.stream_id) {
@@ -299,11 +297,7 @@ impl StreamReplayer {
             }
             // check version confiction
             if store_read
-                .get_latest_version_before(
-                    stream_write.stream_id,
-                    stream_write.key.clone(),
-                    tx.transaction.seq,
-                )
+                .get_latest_version_before(stream_write.stream_id, stream_write.key.clone(), tx.seq)
                 .await?
                 > version
             {
@@ -312,10 +306,10 @@ impl StreamReplayer {
             // check write permission
             if !(store_read
                 .has_write_permission(
-                    tx.metadata.sender,
+                    tx.sender,
                     stream_write.stream_id,
                     stream_write.key.clone(),
-                    tx.transaction.seq,
+                    tx.seq,
                 )
                 .await?)
             {
@@ -344,13 +338,13 @@ impl StreamReplayer {
         // pad GRANT_ADMIN_ROLE prefix to handle the first write to new stream
         let mut is_admin = HashSet::new();
         let store_read = self.store.read().await;
-        for id in &tx.metadata.stream_ids {
-            if store_read.is_new_stream(*id, tx.transaction.seq).await? {
+        for id in &tx.stream_ids {
+            if store_read.is_new_stream(*id, tx.seq).await? {
                 let op_meta = (
                     AccessControlOps::GRANT_ADMIN_ROLE & 0xf0,
                     *id,
                     Arc::new(vec![]),
-                    tx.metadata.sender,
+                    tx.sender,
                 );
                 access_ops.insert(
                     op_meta,
@@ -358,15 +352,12 @@ impl StreamReplayer {
                         op_type: AccessControlOps::GRANT_ADMIN_ROLE,
                         stream_id: *id,
                         key: Arc::new(vec![]),
-                        account: tx.metadata.sender,
+                        account: tx.sender,
                         operator: H160::zero(),
                     },
                 );
                 is_admin.insert(*id);
-            } else if store_read
-                .is_admin(tx.metadata.sender, *id, tx.transaction.seq)
-                .await?
-            {
+            } else if store_read.is_admin(tx.sender, *id, tx.seq).await? {
                 is_admin.insert(*id);
             }
         }
@@ -406,11 +397,11 @@ impl StreamReplayer {
                 }
                 // renounce type
                 AccessControlOps::RENOUNCE_ADMIN_ROLE | AccessControlOps::RENOUNCE_WRITER_ROLE => {
-                    account = tx.metadata.sender;
+                    account = tx.sender;
                 }
                 AccessControlOps::RENOUNCE_SPECIAL_WRITER_ROLE => {
                     key = Arc::new(self.parse_key(stream_reader).await?);
-                    account = tx.metadata.sender;
+                    account = tx.sender;
                 }
                 // unexpected type
                 _ => {
@@ -419,7 +410,7 @@ impl StreamReplayer {
             }
             let op_meta = (op_type & 0xf0, stream_id, key.clone(), account);
             if op_type != AccessControlOps::GRANT_ADMIN_ROLE
-                || (!access_ops.contains_key(&op_meta) && account != tx.metadata.sender)
+                || (!access_ops.contains_key(&op_meta) && account != tx.sender)
             {
                 access_ops.insert(
                     op_meta,
@@ -428,7 +419,7 @@ impl StreamReplayer {
                         stream_id,
                         key: key.clone(),
                         account,
-                        operator: tx.metadata.sender,
+                        operator: tx.sender,
                     },
                 );
             }
@@ -446,7 +437,7 @@ impl StreamReplayer {
     ) -> Result<Option<ReplayResult>> {
         // validate
         let store_read = self.store.read().await;
-        let stream_set = HashSet::<H256>::from_iter(tx.metadata.stream_ids.iter().cloned());
+        let stream_set = HashSet::<H256>::from_iter(tx.stream_ids.iter().cloned());
         for access_control in &access_control_set.access_controls {
             if !stream_set.contains(&access_control.stream_id) {
                 // the write set in data is conflict with tx tags
@@ -475,11 +466,7 @@ impl StreamReplayer {
                         .is_admin
                         .contains(&access_control.stream_id)
                         && !store_read
-                            .is_writer_of_stream(
-                                tx.metadata.sender,
-                                access_control.stream_id,
-                                tx.transaction.seq,
-                            )
+                            .is_writer_of_stream(tx.sender, access_control.stream_id, tx.seq)
                             .await?
                     {
                         return Ok(Some(ReplayResult::AccessControlPermissionDenied(
@@ -496,10 +483,10 @@ impl StreamReplayer {
                         .contains(&access_control.stream_id)
                         && !store_read
                             .is_writer_of_key(
-                                tx.metadata.sender,
+                                tx.sender,
                                 access_control.stream_id,
                                 access_control.key.clone(),
-                                tx.transaction.seq,
+                                tx.seq,
                             )
                             .await?
                     {
@@ -518,12 +505,7 @@ impl StreamReplayer {
     }
 
     async fn replay(&self, tx: &KVTransaction) -> Result<ReplayResult> {
-        if !self
-            .store
-            .read()
-            .await
-            .check_tx_completed(tx.transaction.seq)?
-        {
+        if !self.store.read().await.check_tx_completed(tx.seq)? {
             return Ok(ReplayResult::DataUnavailable);
         }
         let mut stream_reader = StreamReader::new(self.store.clone(), tx);
@@ -585,7 +567,7 @@ impl StreamReplayer {
             return Ok(result);
         }
         Ok(ReplayResult::Commit(
-            tx.transaction.seq,
+            tx.seq,
             stream_write_set,
             access_control_set,
         ))
@@ -635,10 +617,7 @@ impl StreamReplayer {
                         };
                     // replay data
                     if stream_matched && can_write {
-                        info!(
-                            "replaying data of tx with sequence number {:?}..",
-                            tx.transaction.seq
-                        );
+                        info!("replaying data of tx with sequence number {:?}..", tx.seq);
                         match self.replay(&tx).await {
                             Ok(result) => {
                                 let result_str = result.to_string();
@@ -654,7 +633,7 @@ impl StreamReplayer {
                                             .await
                                             .put_stream(
                                                 tx_seq,
-                                                tx.transaction.data_merkle_root,
+                                                tx.data_merkle_root,
                                                 result_str.clone(),
                                                 Some((stream_write_set, access_control_set)),
                                             )
@@ -663,7 +642,7 @@ impl StreamReplayer {
                                             Ok(_) => {
                                                 info!(
                                                     "tx with sequence number {:?} commit.",
-                                                    tx.transaction.seq
+                                                    tx.seq
                                                 );
                                             }
                                             Err(e) => {
@@ -675,7 +654,7 @@ impl StreamReplayer {
                                     }
                                     ReplayResult::DataUnavailable => {
                                         // data not available
-                                        info!("data of tx with sequence number {:?} is not available yet, wait..", tx.transaction.seq);
+                                        info!("data of tx with sequence number {:?} is not available yet, wait..", tx.seq);
                                         tokio::time::sleep(Duration::from_millis(RETRY_WAIT_MS))
                                             .await;
                                         check_replay_progress = true;
@@ -687,8 +666,8 @@ impl StreamReplayer {
                                             .write()
                                             .await
                                             .put_stream(
-                                                tx.transaction.seq,
-                                                tx.transaction.data_merkle_root,
+                                                tx.seq,
+                                                tx.data_merkle_root,
                                                 result_str.clone(),
                                                 None,
                                             )
@@ -697,7 +676,7 @@ impl StreamReplayer {
                                             Ok(_) => {
                                                 info!(
                                                     "tx with sequence number {:?} reverted with reason {:?}",
-                                                    tx.transaction.seq, result_str
+                                                    tx.seq, result_str
                                                 );
                                             }
                                             Err(e) => {
@@ -719,25 +698,20 @@ impl StreamReplayer {
                     } else if stream_matched {
                         info!(
                             "tx {:?} is in stream but sender has no write permission.",
-                            tx.transaction.seq
+                            tx.seq
                         );
                         let result_str = ReplayResult::SenderNoWritePermission.to_string();
                         match self
                             .store
                             .write()
                             .await
-                            .put_stream(
-                                tx.transaction.seq,
-                                tx.transaction.data_merkle_root,
-                                result_str.clone(),
-                                None,
-                            )
+                            .put_stream(tx.seq, tx.data_merkle_root, result_str.clone(), None)
                             .await
                         {
                             Ok(_) => {
                                 info!(
                                     "tx with sequence number {:?} reverted with reason {:?}",
-                                    tx.transaction.seq, result_str
+                                    tx.seq, result_str
                                 );
                             }
                             Err(e) => {
@@ -747,7 +721,7 @@ impl StreamReplayer {
                             }
                         }
                     } else {
-                        info!("tx {:?} is not in stream, skipped.", tx.transaction.seq);
+                        info!("tx {:?} is not in stream, skipped.", tx.seq);
                     }
                     // parse success
                     // update progress, get next tx_seq to sync

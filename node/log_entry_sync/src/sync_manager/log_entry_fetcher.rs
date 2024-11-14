@@ -10,8 +10,8 @@ use ethers::providers::{HttpRateLimitRetryPolicy, RetryClient, RetryClientBuilde
 use ethers::types::{Block, Log, H256};
 use futures::StreamExt;
 use jsonrpsee::tracing::{debug, error, info, warn};
-use kv_types::{submission_topic_to_stream_ids, KVMetadata, KVTransaction};
-use shared_types::{DataRoot, Transaction};
+use kv_types::{submission_topic_to_stream_ids, KVTransaction};
+use shared_types::{DataRoot};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -765,25 +765,19 @@ pub enum LogFetchProgress {
 fn submission_event_to_transaction(e: SubmitFilter, block_number: u64) -> LogFetchProgress {
     LogFetchProgress::Transaction((
         KVTransaction {
-            metadata: KVMetadata {
-                stream_ids: submission_topic_to_stream_ids(e.submission.tags.to_vec()),
-                sender: e.sender,
-            },
-            transaction: Transaction {
-                data: vec![],
-                stream_ids: vec![],
-                data_merkle_root: nodes_to_root(&e.submission.nodes),
-                merkle_nodes: e
-                    .submission
-                    .nodes
-                    .iter()
-                    // the submission height is the height of the root node starting from height 0.
-                    .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
-                    .collect(),
-                start_entry_index: e.start_pos.as_u64(),
-                size: e.submission.length.as_u64(),
-                seq: e.submission_index.as_u64(),
-            },
+            stream_ids: submission_topic_to_stream_ids(e.submission.tags.to_vec()),
+            sender: e.sender,
+            data_merkle_root: nodes_to_root(&e.submission.nodes),
+            merkle_nodes: e
+                .submission
+                .nodes
+                .iter()
+                // the submission height is the height of the root node starting from height 0.
+                .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
+                .collect(),
+            start_entry_index: e.start_pos.as_u64(),
+            size: e.submission.length.as_u64(),
+            seq: e.submission_index.as_u64(),
         },
         block_number,
     ))

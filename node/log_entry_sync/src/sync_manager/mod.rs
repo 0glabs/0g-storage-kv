@@ -26,7 +26,6 @@ const RETRY_WAIT_MS: u64 = 500;
 // Each tx has less than 10KB, so the cache size should be acceptable.
 const BROADCAST_CHANNEL_CAPACITY: usize = 25000;
 const CATCH_UP_END_GAP: u64 = 10;
-const CHECK_ROOT_INTERVAL: u64 = 500;
 
 /// Errors while handle data
 #[derive(Error, Debug)]
@@ -293,7 +292,7 @@ impl LogSyncManager {
 
     async fn put_tx(&mut self, tx: KVTransaction) -> Option<bool> {
         // We call this after process chain reorg, so the sequence number should match.
-        match tx.transaction.seq.cmp(&self.next_tx_seq) {
+        match tx.seq.cmp(&self.next_tx_seq) {
             std::cmp::Ordering::Less => Some(true),
             std::cmp::Ordering::Equal => {
                 debug!("log entry sync get entry: {:?}", tx);
@@ -302,7 +301,7 @@ impl LogSyncManager {
             std::cmp::Ordering::Greater => {
                 error!(
                     "Unexpected transaction seq: next={} get={}",
-                    self.next_tx_seq, tx.transaction.seq
+                    self.next_tx_seq, tx.seq
                 );
                 None
             }
@@ -435,46 +434,8 @@ impl LogSyncManager {
         } else {
             self.next_tx_seq += 1;
 
-            // Check if the computed data root matches on-chain state.
-            // If the call fails, we won't check the root here and return `true` directly.
-            if self.next_tx_seq % CHECK_ROOT_INTERVAL == 0 {
-                let flow_contract = self.log_fetcher.flow_contract();
-
-                match flow_contract
-                    .get_flow_root_by_tx_seq(tx.transaction.seq.into())
-                    .call()
-                    .await
-                {
-                    Ok(contract_root_bytes) => {
-                        let contract_root = H256::from_slice(&contract_root_bytes);
-                        // contract_root is zero for tx submitted before upgrading.
-                        if !contract_root.is_zero() {
-                            match self.store.read().await.get_context() {
-                                Ok((local_root, _)) => {
-                                    if contract_root != local_root {
-                                        error!(
-                                            ?contract_root,
-                                            ?local_root,
-                                            "local flow root and on-chain flow root mismatch"
-                                        );
-                                        return false;
-                                    }
-                                }
-                                Err(e) => {
-                                    warn!(?e, "fail to read the local flow root");
-                                }
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        warn!(?e, "fail to read the on-chain flow root");
-                    }
-                }
-            }
-
-            metrics::STORE_PUT_TX_SPEED_IN_BYTES.update(
-                (tx.transaction.size * 1000 / start_time.elapsed().as_micros() as u64) as usize,
-            );
+            metrics::STORE_PUT_TX_SPEED_IN_BYTES
+                .update((tx.size * 1000 / start_time.elapsed().as_micros() as u64) as usize);
             metrics::STORE_PUT_TX.update_since(start_time);
 
             true

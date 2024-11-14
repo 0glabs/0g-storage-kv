@@ -91,23 +91,17 @@ async fn skippable(
     config: &StreamConfig,
     store: Arc<RwLock<dyn Store>>,
 ) -> Result<(bool, bool)> {
-    if tx.metadata.stream_ids.is_empty() {
+    if tx.stream_ids.is_empty() {
         Ok((false, false))
     } else {
         let replay_progress = store.read().await.get_stream_replay_progress().await?;
         // if replayer is not up-to-date, always make can_write be true
-        let mut can_write = replay_progress < tx.transaction.seq;
-        for id in tx.metadata.stream_ids.iter() {
+        let mut can_write = replay_progress < tx.seq;
+        for id in tx.stream_ids.iter() {
             if !config.stream_set.contains(id) {
                 return Ok((false, false));
             }
-            if !can_write
-                && store
-                    .read()
-                    .await
-                    .can_write(tx.metadata.sender, *id, tx.transaction.seq)
-                    .await?
-            {
+            if !can_write && store.read().await.can_write(tx.sender, *id, tx.seq).await? {
                 can_write = true;
             }
         }

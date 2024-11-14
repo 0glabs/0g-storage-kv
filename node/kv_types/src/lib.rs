@@ -1,9 +1,11 @@
 use ethereum_types::{H160, H256};
 
 use serde::{Deserialize, Serialize};
-use shared_types::Transaction;
+use shared_types::{DataRoot, Transaction, TxID};
+use ssz::Encode;
 use ssz_derive::{Decode as DeriveDecode, Encode as DeriveEncode};
 use std::collections::HashSet;
+use tiny_keccak::{Hasher, Keccak};
 
 use std::sync::Arc;
 
@@ -29,16 +31,52 @@ pub fn submission_topic_to_stream_ids(topic: Vec<u8>) -> Vec<H256> {
 
 #[derive(Clone, Debug, Eq, PartialEq, DeriveDecode, DeriveEncode, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct KVMetadata {
+pub struct KVTransaction {
     pub stream_ids: Vec<H256>,
     pub sender: H160,
+    pub data_merkle_root: DataRoot,
+    /// `(subtree_depth, subtree_root)`
+    pub merkle_nodes: Vec<(usize, DataRoot)>,
+
+    pub start_entry_index: u64,
+    pub size: u64,
+    pub seq: u64,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, DeriveDecode, DeriveEncode, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct KVTransaction {
-    pub metadata: KVMetadata,
-    pub transaction: Transaction,
+impl KVTransaction {
+    pub fn num_entries_of_node(depth: usize) -> usize {
+        1 << (depth - 1)
+    }
+
+    pub fn num_entries_of_list(merkle_nodes: &[(usize, DataRoot)]) -> usize {
+        merkle_nodes.iter().fold(0, |size, &(depth, _)| {
+            size + Transaction::num_entries_of_node(depth)
+        })
+    }
+
+    pub fn num_entries(&self) -> usize {
+        Self::num_entries_of_list(&self.merkle_nodes)
+    }
+
+    pub fn hash(&self) -> H256 {
+        let bytes = self.as_ssz_bytes();
+        let mut h = Keccak::v256();
+        let mut e = H256::zero();
+        h.update(&bytes);
+        h.finalize(e.as_mut());
+        e
+    }
+
+    pub fn id(&self) -> TxID {
+        TxID {
+            seq: self.seq,
+            hash: self.hash(),
+        }
+    }
+
+    pub fn start_entry_index(&self) -> u64 {
+        self.start_entry_index
+    }
 }
 
 #[derive(Debug)]
