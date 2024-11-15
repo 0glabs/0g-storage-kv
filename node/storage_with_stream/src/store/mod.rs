@@ -3,51 +3,26 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use ethereum_types::{H160, H256};
 use kv_types::{AccessControlSet, KVTransaction, KeyValuePair, StreamWriteSet};
-use shared_types::ChunkArrayWithProof;
-use shared_types::ChunkWithProof;
-use shared_types::DataRoot;
-use shared_types::FlowRangeProof;
-use storage::log_store::config::Configurable;
+use shared_types::ChunkArray;
+
+use shared_types::FlowProof;
+
 use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
-use storage::log_store::LogStoreChunkRead;
-use storage::log_store::LogStoreChunkWrite;
 
 use crate::error::Result;
 
-mod metadata_store;
+mod data_store;
+mod flow_store;
 mod sqlite_db_statements;
 pub mod store_manager;
 mod stream_store;
+mod tx_store;
 
 pub use stream_store::to_access_control_op_name;
 pub use stream_store::AccessControlOps;
 
-pub trait LogStoreRead: LogStoreChunkRead {
-    /// Get a transaction by its global log sequence number.
+pub trait DataStoreRead {
     fn get_tx_by_seq_number(&self, seq: u64) -> Result<Option<KVTransaction>>;
-
-    /// Get a transaction by the data root of its data.
-    fn get_tx_seq_by_data_root(&self, data_root: &DataRoot) -> Result<Option<u64>>;
-
-    fn get_tx_by_data_root(&self, data_root: &DataRoot) -> Result<Option<KVTransaction>> {
-        match self.get_tx_seq_by_data_root(data_root)? {
-            Some(seq) => self.get_tx_by_seq_number(seq),
-            None => Ok(None),
-        }
-    }
-
-    fn get_chunk_with_proof_by_tx_and_index(
-        &self,
-        tx_seq: u64,
-        index: usize,
-    ) -> Result<Option<ChunkWithProof>>;
-
-    fn get_chunks_with_proof_by_tx_and_index_range(
-        &self,
-        tx_seq: u64,
-        index_start: usize,
-        index_end: usize,
-    ) -> Result<Option<ChunkArrayWithProof>>;
 
     fn check_tx_completed(&self, tx_seq: u64) -> Result<bool>;
 
@@ -55,68 +30,41 @@ pub trait LogStoreRead: LogStoreChunkRead {
 
     fn get_sync_progress(&self) -> Result<Option<(u64, H256)>>;
 
-    fn get_block_hash_by_number(&self, block_number: u64) -> Result<Option<(H256, Option<u64>)>>;
-
     fn get_block_hashes(&self) -> Result<Vec<(u64, BlockHashAndSubmissionIndex)>>;
-
-    fn validate_range_proof(&self, tx_seq: u64, data: &ChunkArrayWithProof) -> Result<bool>;
-
-    fn get_proof_at_root(&self, root: &DataRoot, index: u64, length: u64)
-        -> Result<FlowRangeProof>;
 
     fn get_log_latest_block_number(&self) -> Result<Option<u64>>;
 
-    fn get_context(&self) -> Result<(DataRoot, u64)>;
+    fn get_chunk_by_flow_index(&self, index: u64, length: u64) -> Result<Option<ChunkArray>>;
 }
 
-pub trait LogStoreWrite: LogStoreChunkWrite {
-    /// Store a data entry metadata.
+pub trait DataStoreWrite {
     fn put_tx(&mut self, tx: KVTransaction) -> Result<()>;
 
-    /// Finalize a transaction storage.
-    /// This will compute and the merkle tree, check the data root, and persist a part of the merkle
-    /// tree for future queries.
-    ///
-    /// This will return error if not all chunks are stored. But since this check can be expensive,
-    /// the caller is supposed to track chunk statuses and call this after storing all the chunks.
-    fn finalize_tx(&mut self, tx_seq: u64) -> Result<()>;
     fn finalize_tx_with_hash(&mut self, tx_seq: u64, tx_hash: H256) -> Result<bool>;
 
-    /// Store the progress of synced block number and its hash.
     fn put_sync_progress(&self, progress: (u64, H256, Option<Option<u64>>)) -> Result<()>;
 
-    /// Revert the log state to a given tx seq.
-    /// This is needed when transactions are reverted because of chain reorg.
-    ///
-    /// Reverted transactions are returned in order.
     fn revert_to(&mut self, tx_seq: u64) -> Result<()>;
-
-    /// If the proof is valid, fill the tree nodes with the new data.
-    fn validate_and_insert_range_proof(
-        &mut self,
-        tx_seq: u64,
-        data: &ChunkArrayWithProof,
-    ) -> Result<bool>;
 
     fn delete_block_hash_by_number(&self, block_number: u64) -> Result<()>;
 
     fn put_log_latest_block_number(&self, block_number: u64) -> Result<()>;
+
+    fn put_chunks_with_tx_hash(
+        &self,
+        tx_seq: u64,
+        tx_hash: H256,
+        chunks: ChunkArray,
+        maybe_file_proof: Option<FlowProof>,
+    ) -> Result<bool>;
 }
 
 pub trait Store:
-    LogStoreRead + LogStoreWrite + Configurable + Send + Sync + StreamRead + StreamWrite + 'static
+    DataStoreRead + DataStoreWrite + Send + Sync + StreamRead + StreamWrite + 'static
 {
 }
-impl<
-        T: LogStoreRead
-            + LogStoreWrite
-            + Configurable
-            + Send
-            + Sync
-            + StreamRead
-            + StreamWrite
-            + 'static,
-    > Store for T
+impl<T: DataStoreRead + DataStoreWrite + Send + Sync + StreamRead + StreamWrite + 'static> Store
+    for T
 {
 }
 

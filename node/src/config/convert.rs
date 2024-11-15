@@ -1,6 +1,6 @@
 #![allow(clippy::field_reassign_with_default)]
 
-use std::{collections::HashSet, str::FromStr};
+use std::{collections::HashSet, str::FromStr, time::Duration};
 
 use crate::ZgsKVConfig;
 use ethereum_types::H256;
@@ -95,6 +95,7 @@ impl ZgsKVConfig {
             self.remove_finalized_block_interval_minutes,
             self.watch_loop_wait_time_ms,
             self.force_log_sync_from_start_block_number,
+            Duration::from_secs(self.blockchain_rpc_timeout_secs),
         ))
     }
 }

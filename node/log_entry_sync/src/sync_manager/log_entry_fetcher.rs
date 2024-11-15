@@ -1,6 +1,6 @@
 use crate::sync_manager::log_query::LogQuery;
-use crate::sync_manager::RETRY_WAIT_MS;
-use crate::ContractAddress;
+use crate::sync_manager::{metrics, RETRY_WAIT_MS};
+use crate::{ContractAddress, LogSyncConfig};
 use anyhow::{anyhow, bail, Result};
 use append_merkle::{Algorithm, Sha3Algorithm};
 use contract_interface::{SubmissionNode, SubmitFilter, ZgsFlow};
@@ -10,21 +10,17 @@ use ethers::providers::{HttpRateLimitRetryPolicy, RetryClient, RetryClientBuilde
 use ethers::types::{Block, Log, H256};
 use futures::StreamExt;
 use jsonrpsee::tracing::{debug, error, info, warn};
-use kv_types::{submission_topic_to_stream_ids, KVMetadata, KVTransaction};
-use shared_types::{DataRoot, Transaction};
+use kv_types::{submission_topic_to_stream_ids, KVTransaction};
+use shared_types::DataRoot;
 use std::collections::{BTreeMap, HashMap};
-use std::str::FromStr;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use storage::log_store::tx_store::BlockHashAndSubmissionIndex;
 use storage_with_stream::Store;
 use task_executor::TaskExecutor;
-use tokio::{
-    sync::{
-        mpsc::{UnboundedReceiver, UnboundedSender},
-        RwLock,
-    },
-    time::Instant,
+use tokio::sync::{
+    mpsc::{UnboundedReceiver, UnboundedSender},
+    RwLock,
 };
 
 pub struct LogEntryFetcher {
@@ -36,28 +32,29 @@ pub struct LogEntryFetcher {
 }
 
 impl LogEntryFetcher {
-    pub async fn new(
-        url: &str,
-        contract_address: ContractAddress,
-        log_page_size: u64,
-        confirmation_delay: u64,
-        rate_limit_retries: u32,
-        timeout_retries: u32,
-        initial_backoff: u64,
-    ) -> Result<Self> {
+    pub async fn new(config: &LogSyncConfig) -> Result<Self> {
         let provider = Arc::new(Provider::new(
             RetryClientBuilder::default()
-                .rate_limit_retries(rate_limit_retries)
-                .timeout_retries(timeout_retries)
-                .initial_backoff(Duration::from_millis(initial_backoff))
-                .build(Http::from_str(url)?, Box::new(HttpRateLimitRetryPolicy)),
+                .rate_limit_retries(config.rate_limit_retries)
+                .timeout_retries(config.timeout_retries)
+                .initial_backoff(Duration::from_millis(config.initial_backoff))
+                .build(
+                    Http::new_with_client(
+                        url::Url::parse(&config.rpc_endpoint_url)?,
+                        reqwest::Client::builder()
+                            .timeout(config.blockchain_rpc_timeout)
+                            .connect_timeout(config.blockchain_rpc_timeout)
+                            .build()?,
+                    ),
+                    Box::new(HttpRateLimitRetryPolicy),
+                ),
         ));
         // TODO: `error` types are removed from the ABI json file.
         Ok(Self {
-            contract_address,
+            contract_address: config.contract_address,
             provider,
-            log_page_size,
-            confirmation_delay,
+            log_page_size: config.log_page_size,
+            confirmation_delay: config.confirmation_block_count,
         })
     }
 
@@ -246,6 +243,7 @@ impl LogEntryFetcher {
                 );
                 let (mut block_hash_sent, mut block_number_sent) = (None, None);
                 while let Some(maybe_log) = stream.next().await {
+                    let start_time = Instant::now();
                     match maybe_log {
                         Ok(log) => {
                             let sync_progress =
@@ -305,6 +303,7 @@ impl LogEntryFetcher {
                             tokio::time::sleep(Duration::from_millis(RETRY_WAIT_MS)).await;
                         }
                     }
+                    metrics::RECOVER_LOG.update_since(start_time);
                 }
 
                 info!("log recover end");
@@ -766,25 +765,19 @@ pub enum LogFetchProgress {
 fn submission_event_to_transaction(e: SubmitFilter, block_number: u64) -> LogFetchProgress {
     LogFetchProgress::Transaction((
         KVTransaction {
-            metadata: KVMetadata {
-                stream_ids: submission_topic_to_stream_ids(e.submission.tags.to_vec()),
-                sender: e.sender,
-            },
-            transaction: Transaction {
-                data: vec![],
-                stream_ids: vec![],
-                data_merkle_root: nodes_to_root(&e.submission.nodes),
-                merkle_nodes: e
-                    .submission
-                    .nodes
-                    .iter()
-                    // the submission height is the height of the root node starting from height 0.
-                    .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
-                    .collect(),
-                start_entry_index: e.start_pos.as_u64(),
-                size: e.submission.length.as_u64(),
-                seq: e.submission_index.as_u64(),
-            },
+            stream_ids: submission_topic_to_stream_ids(e.submission.tags.to_vec()),
+            sender: e.sender,
+            data_merkle_root: nodes_to_root(&e.submission.nodes),
+            merkle_nodes: e
+                .submission
+                .nodes
+                .iter()
+                // the submission height is the height of the root node starting from height 0.
+                .map(|SubmissionNode { root, height }| (height.as_usize() + 1, root.into()))
+                .collect(),
+            start_entry_index: e.start_pos.as_u64(),
+            size: e.submission.length.as_u64(),
+            seq: e.submission_index.as_u64(),
         },
         block_number,
     ))
