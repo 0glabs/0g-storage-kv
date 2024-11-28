@@ -21,6 +21,6 @@ merkle_light = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "96
 merkle_tree = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "96f846073f111adfa31df926be0e4a25e0b85f54" }
 shared_types = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "96f846073f111adfa31df926be0e4a25e0b85f54" }
 task_executor = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "96f846073f111adfa31df926be0e4a25e0b85f54" }
-storage = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "96f846073f111adfa31df926be0e4a25e0b85f54", package = "storage" }
+storage = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "27366a5331d4c3a442af9b85275d1330843da7a7", package = "storage" }
 contract-interface = { git = "https://github.com/0glabs/0g-storage-node.git",rev = "96f846073f111adfa31df926be0e4a25e0b85f54" }
 metrics = { git = "https://github.com/Conflux-Chain/conflux-rust.git", rev = "992ebc5483d937c8f6b883e266f8ed2a67a7fa9a" }
